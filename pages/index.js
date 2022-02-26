@@ -12,8 +12,12 @@ export default function Home() {
         <meta name="description" content="Edited and modified by vaibhav And nagesh " />
         <link rel="icon" href="/insta.ico" />
       </Head>
-
-      <h1 className="heading">Welcome to Instagram clone</h1>
+      <div> Deployment test</div> 
+      <div className="login">first div</div>
+      <div className="signup">Sign up</div>
+      <div className="download">Get app</div>
+      <div className="footer">Footer</div>
+    
     </>
 
 
