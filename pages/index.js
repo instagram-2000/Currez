@@ -11,6 +11,7 @@ import {
   HeartIcon,
 } from "@heroicons/react/outline";
 import ProfileDropdown from "./Profile/ProfileDropdown";
+import Mainnavigation from "../components/Mainnavigation/Mainnavigation";
 export default function Home() {
   const router = useRouter();
   const loginhandelr = () => {
@@ -27,68 +28,7 @@ export default function Home() {
         />
         <link rel="icon" href="/insta.ico" />
       </Head>
-      <div className="flex flex-row justify-center mt-5 h-16">
-        <div className="flex flex-row justify-self-start">
-          <div className="basis-1/2 mt-3 ">
-            <img src="https://i.imgur.com/zqpwkLQ.png" />
-          </div>
-          <div></div>
-        </div>
-        <div className="justify-self-end">
-          <div class="max-w-md mx-auto">
-            <div class="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
-              <div class="grid place-items-center h-full w-12 text-gray-300">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-
-              <input
-                class="peer h-full w-full outline-none text-sm text-gray-700 pr-2"
-                type="text"
-                id="search"
-                placeholder="Search something.."
-              />
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-row px-2 py-3 ">
-          <div>
-            <HomeIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <ChatIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <PlusCircleIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <TemplateIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <HeartIcon className="h-8 w-8" />
-          </div>
-          <div>
-            <ProfileDropdown />
-          </div>
-        </div>
-      </div>
-      {/* <div className="flex justify-center items-center my-40 text-4xl">
-        <Link href="/Login">
-          <h1 className="cursor-pointer text-blue-600 ">Login page touch me</h1>
-        </Link>
-      </div> */}
+      <Mainnavigation></Mainnavigation>
     </>
   );
 }
