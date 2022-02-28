@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from "next/link";
+
 import {
   HomeIcon,
   ChatIcon,
@@ -7,11 +8,11 @@ import {
   TemplateIcon,
   HeartIcon,
 } from "@heroicons/react/outline";
-import ProfileDropdown from "E:/React apps learning/Next j/Combine projects/instagram-clone/pages/Profile/ProfileDropdown.js";
+import ProfileDropdown from "E:/React apps learning/Programming Notes/Next j/Combine projects/instagram-clone/pages/Profile/ProfileDropdown.js";
 
 const Mainnavigation = () => {
   return (
-    <div className="flex flex-row   h-[65px] border-b">
+    <div className="flex flex-row   h-[65px] border-b mb-0 ">
       <div className="flex-none mr-28 ml-44 py-2">
           <img className='h-8 my-3 ml-10 contrast-200' src="https://i.imgur.com/zqpwkLQ.png" />
       </div>
@@ -46,22 +47,22 @@ const Mainnavigation = () => {
       </div>
       <div className="flex flex-row flex-initial px-2 mt-5 space-x-4 ml-20 ">
         <div>
-          <HomeIcon className="h-7 w-7" />
+          <Link href="/"><HomeIcon className="h-7 w-7" /></Link>
         </div>
         <div>
-          <ChatIcon className="h-7 w-7" />
+          <Link href="/Chat"><ChatIcon className="h-7 w-7" /></Link>
         </div>
         <div>
-          <PlusCircleIcon className="h-7 w-7" />
+          <Link href="/"><PlusCircleIcon className="h-7 w-7" /></Link>
         </div>
         <div>
-          <TemplateIcon className="h-7 w-7" />
+          <Link href="/"><TemplateIcon className="h-7 w-7" /></Link>
         </div>
         <div>
-          <HeartIcon className="h-7 w-7" />
+          <Link href="/"><HeartIcon className="h-7 w-7" /></Link>
         </div>
         <div>
-          <ProfileDropdown />
+          <ProfileDropdown></ProfileDropdown>
         </div>
       </div>
     </div>

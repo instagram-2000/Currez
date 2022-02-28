@@ -20,7 +20,8 @@ const Chat = () => {
         <div className="border-gray border-b h-14 flex justify-center items-center bg-white ">
           <span className='font-bold'>Mohanalkarvaibhav ▼</span>
           <span className=''>
-            <i className='fa fa-pencil-square' ></i></span>
+            
+            </span>
 
         </div>
 
