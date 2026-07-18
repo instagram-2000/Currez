@@ -2,8 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Keep this list in sync with VITE_SUPERADMIN_EMAILS in .env — this is
-    // the real enforcement point, the env var is a client-side UI hint only.
+    // Keep this list in sync with VITE_SUPERADMIN_EMAILS — this is the real
+    // enforcement point, the env var is UI-only.
     function isSuperAdminEmail() {
       return request.auth != null &&
         request.auth.token.email in [
@@ -12,16 +12,53 @@ service cloud.firestore {
         ];
     }
 
+    function currentUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasUserDoc() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     // Defense in depth: also honor a Firestore-recorded SUPERADMIN role, so
     // a superadmin added after go-live doesn't require a rules redeploy.
     function isSuperAdminDoc() {
-      return request.auth != null &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPERADMIN';
+      return hasUserDoc() && currentUserDoc().role == 'SUPERADMIN';
     }
 
     function isSuperAdmin() {
       return isSuperAdminEmail() || isSuperAdminDoc();
+    }
+
+    // A hospital admin managing their own hospital's doctors, receptionists,
+    // patients and appointments — never someone else's hospital.
+    function isHospitalAdminOf(hospitalId) {
+      return hasUserDoc() &&
+        currentUserDoc().role == 'HOSPITAL_ADMIN' &&
+        currentUserDoc().hospitalId == hospitalId &&
+        currentUserDoc().status == 'active';
+    }
+
+    // Any active staff member (of any role) of the given hospital — used
+    // for patient/appointment access, and for cross-role visibility (e.g.
+    // a receptionist listing doctors, a doctor's own dashboard).
+    function isHospitalStaffOf(hospitalId) {
+      return hasUserDoc() &&
+        currentUserDoc().hospitalId == hospitalId &&
+        currentUserDoc().status == 'active';
+    }
+
+    // A doctor may update their own record (schedule, specialization,
+    // display name) but never their role, hospital, status or email —
+    // those stay hospital-admin/superadmin-only.
+    function isSelfDoctorScheduleUpdate(uid) {
+      return request.auth != null && request.auth.uid == uid &&
+        resource.data.role == 'DOCTOR' &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.hospitalId == resource.data.hospitalId &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.email == resource.data.email;
     }
 
     match /hospitals/{slug} {
@@ -30,9 +67,40 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow get: if request.auth != null && (request.auth.uid == uid || isSuperAdmin());
-      allow list: if isSuperAdmin();
-      allow create, update, delete: if isSuperAdmin();
+      allow get: if request.auth != null &&
+        (request.auth.uid == uid || isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId));
+      allow list: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+
+      allow create: if isSuperAdmin() ||
+        (isHospitalAdminOf(request.resource.data.hospitalId) &&
+         request.resource.data.role in ['DOCTOR', 'RECEPTIONIST']);
+
+      // A hospital admin may update their own doctors'/receptionists'
+      // status and schedule, but never change their role or move them to
+      // a different hospital (that would be a privilege-escalation path).
+      // A doctor may separately update only their own record's schedule.
+      allow update: if isSuperAdmin() ||
+        (isHospitalAdminOf(resource.data.hospitalId) &&
+         resource.data.role in ['DOCTOR', 'RECEPTIONIST'] &&
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.hospitalId == resource.data.hospitalId) ||
+        isSelfDoctorScheduleUpdate(uid);
+
+      allow delete: if isSuperAdmin();
+    }
+
+    match /patients/{patientId} {
+      allow read: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow create: if isHospitalStaffOf(request.resource.data.hospitalId);
+      allow update: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow delete: if isSuperAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow create: if isHospitalStaffOf(request.resource.data.hospitalId);
+      allow update: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow delete: if isSuperAdmin();
     }
 
     match /{document=**} {

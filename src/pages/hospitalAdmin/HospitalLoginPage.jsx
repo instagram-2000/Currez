@@ -1,28 +1,45 @@
-import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { signIn, signOutUser } from '../../firebase/auth'
+import { resolveHospitalConfig } from '../../utils/hospitalConfig'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES } from '../../utils/roles'
 import Spinner from '../../components/common/Spinner'
 
-function SuperAdminLoginPage() {
-  const { loading, user, role } = useAuth()
+const STAFF_ROLES = [ROLES.HOSPITAL_ADMIN, ROLES.DOCTOR, ROLES.RECEPTIONIST]
+
+function HospitalLoginPage({ tenantSlug }) {
+  const location = useLocation()
+  const { loading, user, role, hospitalId, status } = useAuth()
+  const [hospitalTitle, setHospitalTitle] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (loading) return <Spinner />
-  if (user && role === ROLES.SUPERADMIN) return <Navigate to="/superadmin/dashboard" replace />
+  useEffect(() => {
+    resolveHospitalConfig(tenantSlug).then((config) => setHospitalTitle(config?.title || ''))
+  }, [tenantSlug])
 
-  if (user && role !== ROLES.SUPERADMIN) {
+  if (loading) return <Spinner />
+
+  const isAuthorizedStaff =
+    user && STAFF_ROLES.includes(role) && hospitalId === tenantSlug && status !== 'disabled'
+
+  if (isAuthorizedStaff) {
+    return <Navigate to={{ pathname: '/dashboard/overview', search: location.search }} replace />
+  }
+
+  if (user) {
+    const message =
+      status === 'disabled'
+        ? 'Your account has been deactivated. Contact your hospital admin.'
+        : `${user.email} does not have access to this hospital's dashboard.`
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-lg font-semibold text-slate-900">Not authorized</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            {user.email} does not have super admin access.
-          </p>
+          <h1 className="text-lg font-semibold text-slate-900">Not available</h1>
+          <p className="mt-2 text-sm text-slate-500">{message}</p>
           <button
             onClick={() => signOutUser()}
             className="mt-6 w-full cursor-pointer rounded-lg bg-slate-900 py-2 text-sm font-medium text-white"
@@ -50,8 +67,10 @@ function SuperAdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Super Admin</h1>
-        <p className="mt-1 text-sm text-slate-500">Sign in to manage hospitals and staff.</p>
+        <h1 className="text-xl font-semibold text-slate-900">Staff Login</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {hospitalTitle ? `Sign in to manage ${hospitalTitle}.` : 'Sign in to your hospital dashboard.'}
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
@@ -99,4 +118,4 @@ function SuperAdminLoginPage() {
   )
 }
 
-export default SuperAdminLoginPage
+export default HospitalLoginPage

@@ -14,7 +14,9 @@ import { ROLES } from '../utils/roles'
 
 const USERS_COLLECTION = 'users'
 
-export function createUserDoc(uid, { email, displayName, role, hospitalId, createdBy }) {
+// `extra` carries role-specific fields (e.g. a doctor's specialization
+// and weekly schedule) without forcing every caller to know about them.
+export function createUserDoc(uid, { email, displayName, role, hospitalId, createdBy, ...extra }) {
   return setDoc(doc(db, USERS_COLLECTION, uid), {
     email,
     displayName,
@@ -24,7 +26,12 @@ export function createUserDoc(uid, { email, displayName, role, hospitalId, creat
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     createdBy,
+    ...extra,
   })
+}
+
+export function updateDoctorSchedule(uid, schedule) {
+  return updateDoc(doc(db, USERS_COLLECTION, uid), { schedule, updatedAt: serverTimestamp() })
 }
 
 export function upsertSuperAdminDoc(uid, { email, displayName }) {

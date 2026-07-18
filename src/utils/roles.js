@@ -10,6 +10,10 @@ export const ROLES = {
 // Firebase Console and recognized via SUPERADMIN_EMAILS.
 export const CREATABLE_STAFF_ROLES = [ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR]
 
+// A hospital admin may only add doctors/receptionists within their own
+// hospital — never another hospital admin (that stays superadmin-only).
+export const CREATABLE_STAFF_ROLES_BY_HOSPITAL_ADMIN = [ROLES.DOCTOR, ROLES.RECEPTIONIST]
+
 export const ROLE_LABELS = {
   [ROLES.SUPERADMIN]: 'Super Admin',
   [ROLES.HOSPITAL_ADMIN]: 'Hospital Admin',

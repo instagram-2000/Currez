@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { signOutSuperAdmin } from '../../firebase/auth'
+import { signOutUser } from '../../firebase/auth'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -37,7 +37,7 @@ function SuperAdminLayout() {
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
           <span className="text-sm text-slate-500">{user?.email}</span>
           <button
-            onClick={() => signOutSuperAdmin()}
+            onClick={() => signOutUser()}
             className="cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
             Logout

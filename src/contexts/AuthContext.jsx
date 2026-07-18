@@ -7,7 +7,7 @@ import { isSuperAdminEmail, ROLES } from '../utils/roles'
 
 const AuthContext = createContext(null)
 
-const EMPTY_SESSION = { user: null, role: null, hospitalId: null, status: null, loading: false }
+const EMPTY_SESSION = { user: null, role: null, hospitalId: null, status: null, userDoc: null, loading: false }
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState({ ...EMPTY_SESSION, loading: true })
@@ -31,6 +31,7 @@ export function AuthProvider({ children }) {
           role: ROLES.SUPERADMIN,
           hospitalId: null,
           status: 'active',
+          userDoc: null,
           loading: false,
         })
         return
@@ -45,13 +46,14 @@ export function AuthProvider({ children }) {
             role: data.role,
             hospitalId: data.hospitalId ?? null,
             status: data.status,
+            userDoc: data,
             loading: false,
           })
         } else {
-          setSession({ user: firebaseUser, role: null, hospitalId: null, status: null, loading: false })
+          setSession({ user: firebaseUser, role: null, hospitalId: null, status: null, userDoc: null, loading: false })
         }
       } catch {
-        setSession({ user: firebaseUser, role: null, hospitalId: null, status: null, loading: false })
+        setSession({ user: firebaseUser, role: null, hospitalId: null, status: null, userDoc: null, loading: false })
       }
     })
 

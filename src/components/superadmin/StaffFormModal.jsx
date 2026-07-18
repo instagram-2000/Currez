@@ -2,18 +2,22 @@ import { useState } from 'react'
 import { createStaffAuthAccount } from '../../firebase/secondaryAuth'
 import { createUserDoc } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
-import { CREATABLE_STAFF_ROLES, ROLE_LABELS } from '../../utils/roles'
+import { CREATABLE_STAFF_ROLES, ROLES, ROLE_LABELS } from '../../utils/roles'
 import { generatePassword } from '../../utils/generatePassword'
+import { DEFAULT_SCHEDULE } from '../../utils/doctorSchedule'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none'
 
-function StaffFormModal({ hospitalId, onCreated, onCancel }) {
+// Reused by both the superadmin (any creatable role) and hospital-admin
+// (doctors/receptionists only, via `allowedRoles`) staff-creation flows.
+function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCreated, onCancel }) {
   const { user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState(generatePassword())
   const [displayName, setDisplayName] = useState('')
-  const [role, setRole] = useState(CREATABLE_STAFF_ROLES[0])
+  const [role, setRole] = useState(allowedRoles[0])
+  const [specialization, setSpecialization] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -30,6 +34,9 @@ function StaffFormModal({ hospitalId, onCreated, onCancel }) {
         role,
         hospitalId,
         createdBy: user.uid,
+        ...(role === ROLES.DOCTOR
+          ? { specialization: specialization.trim(), schedule: DEFAULT_SCHEDULE }
+          : {}),
       })
       onCreated({ email: trimmedEmail, password })
     } catch (err) {
@@ -73,13 +80,29 @@ function StaffFormModal({ hospitalId, onCreated, onCancel }) {
               onChange={(e) => setRole(e.target.value)}
               className={`${inputClass} cursor-pointer`}
             >
-              {CREATABLE_STAFF_ROLES.map((r) => (
+              {allowedRoles.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABELS[r]}
                 </option>
               ))}
             </select>
           </div>
+
+          {role === ROLES.DOCTOR && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Specialization</label>
+              <input
+                type="text"
+                placeholder="e.g. Cardiologist"
+                value={specialization}
+                onChange={(e) => setSpecialization(e.target.value)}
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                A default Mon–Fri, 9am–5pm schedule is created — edit it after adding this doctor.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700">Initial password</label>
