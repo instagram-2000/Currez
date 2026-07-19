@@ -4,9 +4,11 @@ import { subscribePatients } from '../../firebase/patients'
 import { subscribeUsersByHospital } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES } from '../../utils/roles'
+import { isTimeWithinSchedule } from '../../utils/doctorSchedule'
 import BookAppointmentModal from '../../components/hospitalAdmin/BookAppointmentModal'
 import ConfirmPaymentModal from '../../components/hospitalAdmin/ConfirmPaymentModal'
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
+import RescheduleAppointmentModal from '../../components/hospitalAdmin/RescheduleAppointmentModal'
 import Spinner from '../../components/common/Spinner'
 
 const STATUS_STYLES = {
@@ -54,12 +56,29 @@ function AppointmentsPage({ tenantSlug }) {
   const [confirmingAppointment, setConfirmingAppointment] = useState(null)
   const [completingAppt, setCompletingAppt] = useState(null)
   const [viewingAppt, setViewingAppt] = useState(null)
+  const [reschedulingAppt, setReschedulingAppt] = useState(null)
 
   useEffect(() => subscribeAppointments(tenantSlug, setAppointments), [tenantSlug])
   useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
 
   const doctors = staff.filter((s) => s.role === ROLES.DOCTOR && s.status === 'active')
+  // Keyed by uid regardless of active/disabled status, so a schedule-conflict
+  // check still works even for an appointment whose doctor was since deactivated.
+  const doctorsById = useMemo(
+    () => Object.fromEntries(staff.filter((s) => s.role === ROLES.DOCTOR).map((d) => [d.uid, d])),
+    [staff]
+  )
+
+  // A confirmed appointment can go stale if the doctor edits their weekly
+  // schedule afterwards — this flags that mismatch instead of silently
+  // continuing to show "Confirmed" for a slot the doctor no longer works.
+  function hasScheduleConflict(appt) {
+    if (appt.status !== 'scheduled' || !appt.doctorId || !appt.time) return false
+    const doctor = doctorsById[appt.doctorId]
+    if (!doctor) return false
+    return !isTimeWithinSchedule(doctor.schedule, appt.date, appt.time)
+  }
 
   const visible = useMemo(() => {
     if (!appointments) return []
@@ -116,7 +135,7 @@ function AppointmentsPage({ tenantSlug }) {
             {visible.map((appt) => (
               <tr key={appt.id} className="transition-colors hover:bg-card-strong">
                 <td className="px-4 py-3 text-heading">{appt.date}</td>
-                <td className="px-4 py-3 text-muted">{appt.time}</td>
+                <td className="px-4 py-3 text-muted">{appt.time || '—'}</td>
                 <td className="px-4 py-3 text-heading">
                   {appt.patientName}
                   {appt.patientPhone && (
@@ -128,6 +147,14 @@ function AppointmentsPage({ tenantSlug }) {
                 )}
                 <td className="px-4 py-3">
                   <AppointmentStatusBadge status={appt.status} />
+                  {hasScheduleConflict(appt) && (
+                    <span
+                      title="The doctor's schedule no longer covers this time — reschedule it."
+                      className="ml-2 inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-amber-500/30 ring-inset dark:text-amber-400"
+                    >
+                      ⚠ Schedule changed
+                    </span>
+                  )}
                 </td>
                 {!isDoctor && (
                   <td className="px-4 py-3 text-muted">{PAYMENT_LABELS[appt.paymentMethod] || '—'}</td>
@@ -143,6 +170,16 @@ function AppointmentsPage({ tenantSlug }) {
                   )}
                   {appt.status === 'scheduled' && (
                     <>
+                      {canBook && (
+                        <button
+                          onClick={() => setReschedulingAppt(appt)}
+                          className={`mr-4 cursor-pointer text-sm font-medium hover:underline ${
+                            hasScheduleConflict(appt) ? 'text-amber-600 dark:text-amber-400' : 'text-body hover:text-heading'
+                          }`}
+                        >
+                          Reschedule
+                        </button>
+                      )}
                       <button
                         onClick={() =>
                           isDoctor ? setCompletingAppt(appt) : updateAppointmentStatus(appt.id, 'completed')
@@ -186,6 +223,7 @@ function AppointmentsPage({ tenantSlug }) {
           hospitalId={tenantSlug}
           patients={patients}
           doctors={doctors}
+          appointments={appointments}
           onCancel={() => setShowBookModal(false)}
           onCreated={() => setShowBookModal(false)}
         />
@@ -195,7 +233,17 @@ function AppointmentsPage({ tenantSlug }) {
         <ConfirmPaymentModal
           appointment={confirmingAppointment}
           doctors={doctors}
+          appointments={appointments}
           onClose={() => setConfirmingAppointment(null)}
+        />
+      )}
+
+      {reschedulingAppt && (
+        <RescheduleAppointmentModal
+          appointment={reschedulingAppt}
+          doctors={doctors}
+          appointments={appointments}
+          onClose={() => setReschedulingAppt(null)}
         />
       )}
 

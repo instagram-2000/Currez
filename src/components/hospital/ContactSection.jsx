@@ -1,15 +1,17 @@
+import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 
 function ContactSection({ config }) {
   const { footer, opdHours } = config
+  const { t } = useLanguage()
   if (!footer?.address && !footer?.phone && !footer?.email && !opdHours?.length) return null
 
   return (
     <section id="contact" className="px-6 py-20 md:px-12">
       <Reveal>
-        <SectionEyebrow>Contact</SectionEyebrow>
-        <h2 className="mt-3 text-3xl font-bold text-heading">Visit or reach us</h2>
+        <SectionEyebrow>{t('hospital.contact')}</SectionEyebrow>
+        <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.visitOrReachUs')}</h2>
       </Reveal>
 
       <div className="mt-10 grid gap-10 md:grid-cols-2">
@@ -42,8 +44,8 @@ function ContactSection({ config }) {
             <table className="w-full max-w-sm text-sm">
               <thead>
                 <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-medium">Day</th>
-                  <th className="pb-2 font-medium">OPD Hours</th>
+                  <th className="pb-2 font-medium">{t('hospital.day')}</th>
+                  <th className="pb-2 font-medium">{t('hospital.opdHours')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line text-body">
@@ -62,7 +64,7 @@ function ContactSection({ config }) {
           delay={120}
           className="flex min-h-[220px] items-center justify-center rounded-xl border border-line bg-card text-center text-sm text-muted"
         >
-          <span>🗺️ Map / location photo</span>
+          <span>🗺️ {t('hospital.mapPlaceholder')}</span>
         </Reveal>
       </div>
     </section>

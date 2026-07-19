@@ -96,15 +96,34 @@ export function completeAppointmentWithNotes(appointmentId, { concerns, prescrip
 // neither is processed by this app, it's a record-keeping field only).
 // If the appointment was booked without a doctor preference, confirming it
 // is also the point where reception assigns one — pass doctorId/doctorName
-// only when actually assigning (leave unset if it already has one).
-export function confirmAppointment(appointmentId, { paymentMethod, confirmedBy, doctorId, doctorName }) {
+// only when actually assigning (leave unset if it already has one). date/time
+// are always written here too: the patient's original request may have been
+// left blank, or no longer fit the assigned doctor's schedule, so
+// confirmation is where a definite slot is locked in.
+export function confirmAppointment(appointmentId, { paymentMethod, confirmedBy, date, time, doctorId, doctorName }) {
   return updateDoc(doc(db, APPOINTMENTS_COLLECTION, appointmentId), {
     status: 'scheduled',
     paymentMethod,
+    date,
+    time,
     paymentConfirmedAt: serverTimestamp(),
     paymentConfirmedBy: confirmedBy,
     updatedAt: serverTimestamp(),
     ...(doctorId ? { doctorId, doctorName } : {}),
+  })
+}
+
+// Lets reception move an already-scheduled appointment to a new date/time
+// (and optionally a new doctor) — used when a doctor's schedule changes
+// after confirmation and the original slot no longer works.
+export function rescheduleAppointment(appointmentId, { date, time, doctorId, doctorName, rescheduledBy }) {
+  return updateDoc(doc(db, APPOINTMENTS_COLLECTION, appointmentId), {
+    date,
+    time,
+    ...(doctorId ? { doctorId, doctorName } : {}),
+    rescheduledAt: serverTimestamp(),
+    rescheduledBy,
+    updatedAt: serverTimestamp(),
   })
 }
 

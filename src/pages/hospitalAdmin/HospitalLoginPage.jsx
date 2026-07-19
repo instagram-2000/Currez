@@ -1,25 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
-import { signIn, signOutUser } from '../../firebase/auth'
+import { Link, Navigate, useLocation } from 'react-router-dom'
+import { signIn, signOutUser, resetPassword } from '../../firebase/auth'
 import { subscribeHospital } from '../../firebase/hospitals'
 import { useAuth } from '../../contexts/AuthContext'
-import { ROLES, ROLE_LABELS } from '../../utils/roles'
+import { ROLES } from '../../utils/roles'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import Spinner from '../../components/common/Spinner'
 import ThemeToggle from '../../components/common/ThemeToggle'
 import NavIcon from '../../components/common/NavIcon'
+import PasswordInput from '../../components/common/PasswordInput'
 
 const STAFF_ROLES = [ROLES.HOSPITAL_ADMIN, ROLES.DOCTOR, ROLES.RECEPTIONIST]
-
-// Purely a visual affordance — the account's real role comes from its
-// Firestore user doc after sign-in (useAuth), not from what's clicked here.
-// Picking a card just personalizes the button label / icon before submit.
-const ROLE_CARDS = [
-  { role: ROLES.DOCTOR, icon: 'doctors', description: 'Consults, patients & schedule' },
-  { role: ROLES.HOSPITAL_ADMIN, icon: 'hospitals', description: 'Staff, departments & settings' },
-  { role: ROLES.RECEPTIONIST, icon: 'clipboard', description: 'Appointments & front desk' },
-]
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -44,11 +36,12 @@ function HospitalLoginPage({ tenantSlug }) {
   const location = useLocation()
   const { loading, user, role, hospitalId, status } = useAuth()
   const [hospitalTitle, setHospitalTitle] = useState('')
-  const [selectedRole, setSelectedRole] = useState(ROLES.DOCTOR)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const { errors, validate, clearFieldError } = useFormValidation({
     email: [validators.required('Email is required.'), validators.email('Enter a valid email address.')],
     password: [validators.required('Password is required.')],
@@ -103,9 +96,35 @@ function HospitalLoginPage({ tenantSlug }) {
     }
   }
 
+  async function handleForgotPassword() {
+    setError('')
+    setResetSent(false)
+    if (!email.trim() || validators.email('invalid')(email.trim())) {
+      setError('Enter a valid email above first, then click "Forgot password?" again.')
+      return
+    }
+    setResetting(true)
+    try {
+      await resetPassword(email.trim())
+      setResetSent(true)
+    } catch {
+      // Don't reveal whether the email exists — same message either way.
+      setResetSent(true)
+    } finally {
+      setResetting(false)
+    }
+  }
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-page px-6 py-10 text-heading">
       <ThemeToggle className="absolute top-4 right-4" />
+      <Link
+        to={{ pathname: '/', search: location.search }}
+        className="absolute top-4 left-4 z-10 flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-heading"
+      >
+        <NavIcon name="arrowLeft" className="h-4 w-4" />
+        Back to site
+      </Link>
       <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-line bg-surface shadow-xl md:flex">
         {/* Branding panel */}
         <div
@@ -147,35 +166,7 @@ function HospitalLoginPage({ tenantSlug }) {
         {/* Sign-in panel */}
         <div className="p-8 md:w-3/5">
           <h2 className="text-xl font-bold text-heading">Sign in</h2>
-          <p className="mt-1 text-sm text-muted">Choose your role to continue.</p>
-
-          <div className="mt-5 space-y-2">
-            {ROLE_CARDS.map((card) => {
-              const active = selectedRole === card.role
-              return (
-                <button
-                  key={card.role}
-                  type="button"
-                  onClick={() => setSelectedRole(card.role)}
-                  className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
-                    active ? 'border-indigo-500 bg-indigo-500/10' : 'border-line hover:border-line-strong'
-                  }`}
-                >
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                      active ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300' : 'bg-card-strong text-muted'
-                    }`}
-                  >
-                    <NavIcon name={card.icon} className="h-4.5 w-4.5" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-medium text-heading">{ROLE_LABELS[card.role]}</span>
-                    <span className="block text-xs text-muted">{card.description}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          <p className="mt-1 text-sm text-muted">Your role is detected automatically after you sign in.</p>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <div>
@@ -188,7 +179,7 @@ function HospitalLoginPage({ tenantSlug }) {
                 autoComplete="username"
                 placeholder="you@hospital.in"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); setResetSent(false) }}
                 className={inputClass}
               />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
@@ -198,9 +189,8 @@ function HospitalLoginPage({ tenantSlug }) {
               <label htmlFor="password" className={labelClass}>
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); clearFieldError('password') }}
@@ -210,19 +200,29 @@ function HospitalLoginPage({ tenantSlug }) {
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
+            {resetSent && (
+              <p className="text-sm text-emerald-500">
+                If an account exists for that email, a password reset link has been sent.
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={submitting}
               className="w-full cursor-pointer rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Signing in…' : `Sign in as ${ROLE_LABELS[selectedRole]}`}
+              {submitting ? 'Signing in…' : 'Sign in'}
             </button>
 
             <p className="text-center text-sm">
-              <a href="#" className="text-indigo-600 hover:underline dark:text-indigo-400">
-                Forgot password?
-              </a>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetting}
+                className="cursor-pointer text-indigo-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-indigo-400"
+              >
+                {resetting ? 'Sending reset link…' : 'Forgot password?'}
+              </button>
             </p>
           </form>
         </div>

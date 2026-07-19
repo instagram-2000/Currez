@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { subscribeUsersByHospital, setUserStatus } from '../../firebase/users'
+import { resetPassword } from '../../firebase/auth'
 import { CREATABLE_STAFF_ROLES_BY_HOSPITAL_ADMIN, ROLES, ROLE_LABELS } from '../../utils/roles'
 import StaffFormModal from '../../components/superadmin/StaffFormModal'
 import CredentialsDialog from '../../components/superadmin/CredentialsDialog'
@@ -12,6 +13,17 @@ function StaffPage({ tenantSlug }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [newCredentials, setNewCredentials] = useState(null)
   const [scheduleDoctor, setScheduleDoctor] = useState(null)
+  const [resetSentFor, setResetSentFor] = useState(null)
+
+  async function handleResetPassword(member) {
+    setResetSentFor(null)
+    try {
+      await resetPassword(member.email)
+    } finally {
+      setResetSentFor(member.uid)
+      setTimeout(() => setResetSentFor(null), 4000)
+    }
+  }
 
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
 
@@ -68,6 +80,12 @@ function StaffPage({ tenantSlug }) {
                       Schedule
                     </button>
                   )}
+                  <button
+                    onClick={() => handleResetPassword(member)}
+                    className="mr-4 cursor-pointer text-sm font-medium text-body hover:text-heading"
+                  >
+                    {resetSentFor === member.uid ? 'Reset email sent' : 'Reset password'}
+                  </button>
                   <button
                     onClick={() => setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')}
                     className="cursor-pointer text-sm font-medium text-body hover:text-heading"

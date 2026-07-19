@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { subscribeHospital, updateHospital } from '../../firebase/hospitals'
 import { subscribeUsersByHospital, setUserStatus } from '../../firebase/users'
+import { resetPassword } from '../../firebase/auth'
 import { ROLE_LABELS } from '../../utils/roles'
 import { CONTENT_SECTIONS } from '../../utils/hospitalContentSchema'
 import HospitalFormPage from './HospitalFormPage'
@@ -28,6 +29,7 @@ function HospitalDetailPage() {
   const [showStaffForm, setShowStaffForm] = useState(false)
   const [newCredentials, setNewCredentials] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [resetSentFor, setResetSentFor] = useState(null)
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
   useEffect(() => subscribeUsersByHospital(slug, setStaff), [slug])
@@ -35,6 +37,16 @@ function HospitalDetailPage() {
 
   if (hospital === undefined) return <Spinner />
   if (hospital === null) return <TenantNotFound slug={slug} />
+
+  async function handleResetPassword(member) {
+    setResetSentFor(null)
+    try {
+      await resetPassword(member.email)
+    } finally {
+      setResetSentFor(member.uid)
+      setTimeout(() => setResetSentFor(null), 4000)
+    }
+  }
 
   async function toggleStatus() {
     setTogglingStatus(true)
@@ -160,6 +172,12 @@ function HospitalDetailPage() {
                         <StatusBadge status={member.status} kind="user" />
                       </td>
                       <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleResetPassword(member)}
+                          className="mr-4 cursor-pointer text-sm font-medium text-body hover:text-heading"
+                        >
+                          {resetSentFor === member.uid ? 'Reset email sent' : 'Reset password'}
+                        </button>
                         <button
                           onClick={() =>
                             setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')

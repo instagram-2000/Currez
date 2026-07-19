@@ -4,11 +4,12 @@ import { subscribeHospital } from '../../firebase/hospitals'
 import { subscribeActiveDoctors } from '../../firebase/users'
 import { createPatient } from '../../firebase/patients'
 import { createAppointment } from '../../firebase/appointments'
-import { weekdayKeyForDate } from '../../utils/doctorSchedule'
+import { weekdayKeyForDate, availableSlotsForDate } from '../../utils/doctorSchedule'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import { useLanguage } from '../../contexts/LanguageContext'
 import NavIcon from '../common/NavIcon'
+import TimeSlotPicker from '../common/TimeSlotPicker'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-base text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -37,15 +38,24 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
     name: [validators.required('Name is required.')],
     phone: [validators.required('Phone is required.'), validators.phone('Enter a valid phone number.')],
     date: [validators.required('Date is required.')],
-    time: [validators.required('Time is required.')],
   })
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
   useEffect(() => subscribeActiveDoctors(slug, setDoctors), [slug])
 
+  // Time isn't required to submit — a patient can leave it as "any time"
+  // and reception will pick an exact slot when they confirm at the desk.
+  useEffect(() => {
+    setTime('')
+  }, [doctorId, date])
+
   const selectedDoctor = doctors.find((d) => d.uid === doctorId)
   const weekday = weekdayKeyForDate(date)
   const daySchedule = selectedDoctor?.schedule?.[weekday]
+  // No visibility into other patients' bookings here (public/unauthenticated) —
+  // slots reflect the doctor's working hours only; reception resolves any
+  // double-booking when they confirm.
+  const slots = selectedDoctor ? availableSlotsForDate(selectedDoctor.schedule, date) : []
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -175,36 +185,42 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Preferred date</label>
-            <input
-              type="date"
-              min={todayString()}
-              value={date}
-              onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
-              className={inputClass}
-            />
-            {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
-          </div>
-          <div>
-            <label className={labelClass}>Preferred time</label>
-            <input type="time" value={time} onChange={(e) => { setTime(e.target.value); clearFieldError('time') }} className={inputClass} />
-            {errors.time && <p className="mt-1 text-xs text-red-500">{errors.time}</p>}
-          </div>
+        <div>
+          <label className={labelClass}>{t('booking.preferredDate')}</label>
+          <input
+            type="date"
+            min={todayString()}
+            value={date}
+            onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
+            className={inputClass}
+          />
+          {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
         </div>
 
-        {selectedDoctor && weekday && (
-          <p className={`text-xs ${daySchedule?.available ? 'text-faint' : 'text-amber-500'}`}>
-            {daySchedule?.available
-              ? t('booking.scheduleAvailable', {
+        {selectedDoctor ? (
+          <div>
+            <label className={labelClass}>{t('booking.preferredTime')}</label>
+            {daySchedule?.available && (
+              <p className="mt-1 mb-2 text-xs text-faint">
+                {t('booking.scheduleAvailable', {
                   doctor: selectedDoctor.displayName,
                   day: t(`day.${weekday}`),
                   start: daySchedule.start,
                   end: daySchedule.end,
-                })
-              : t('booking.scheduleUnavailable', { doctor: selectedDoctor.displayName, day: t(`day.${weekday}`) })}
-          </p>
+                })}
+              </p>
+            )}
+            <TimeSlotPicker
+              slots={slots}
+              value={time}
+              onChange={setTime}
+              allowAny
+              anyLabel={t('booking.anyTime')}
+              emptyHint={t('booking.scheduleUnavailable', { doctor: selectedDoctor.displayName, day: t(`day.${weekday}`) })}
+            />
+          </div>
+        ) : (
+          <p className="text-xs text-faint">{t('booking.noDoctorTimeHint')}</p>
         )}
 
         {error && <p className="text-sm text-red-500">{error}</p>}

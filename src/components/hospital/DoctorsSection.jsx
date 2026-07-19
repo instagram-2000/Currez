@@ -13,7 +13,7 @@ function DoctorsSection({ doctors }) {
   return (
     <section id="doctors" className="px-6 py-20 md:px-12">
       <Reveal>
-        <SectionEyebrow>Doctors</SectionEyebrow>
+        <SectionEyebrow>{t('hospital.navDoctors')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.ourDoctors')}</h2>
       </Reveal>
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

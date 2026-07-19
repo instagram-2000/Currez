@@ -5,9 +5,9 @@ function Footer({ config, onStatusClick }) {
   const { t } = useLanguage()
 
   const links = [
-    config.optionals?.services?.enabled === 'on' && { href: '#services', label: 'Services' },
-    config.optionals?.doctors?.enabled === 'on' && { href: '#doctors', label: 'Doctors' },
-    { href: '#contact', label: 'Contact' },
+    config.optionals?.services?.enabled === 'on' && { href: '#services', label: t('hospital.navServices') },
+    config.optionals?.doctors?.enabled === 'on' && { href: '#doctors', label: t('hospital.navDoctors') },
+    { href: '#contact', label: t('hospital.navContact') },
   ].filter(Boolean)
 
   return (

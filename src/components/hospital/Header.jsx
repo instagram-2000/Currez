@@ -5,10 +5,10 @@ import LanguageSwitcher from '../common/LanguageSwitcher'
 import ThemeToggle from '../common/ThemeToggle'
 
 const SECTION_NAV = [
-  { key: 'services', href: '#services', label: 'Services' },
-  { key: 'departments', href: '#departments', label: 'Departments' },
-  { key: 'doctors', href: '#doctors', label: 'Doctors' },
-  { key: 'testimonials', href: '#testimonials', label: 'Testimonials' },
+  { key: 'services', href: '#services', labelKey: 'hospital.navServices' },
+  { key: 'departments', href: '#departments', labelKey: 'hospital.navDepartments' },
+  { key: 'doctors', href: '#doctors', labelKey: 'hospital.navDoctors' },
+  { key: 'testimonials', href: '#testimonials', labelKey: 'hospital.navTestimonials' },
 ]
 
 function Header({ config, onBookClick, onStatusClick }) {
@@ -19,8 +19,8 @@ function Header({ config, onBookClick, onStatusClick }) {
 
   const navLinks = [
     ...SECTION_NAV.filter((item) => optionals?.[item.key]?.enabled === 'on'),
-    { key: 'contact', href: '#contact', label: 'Contact' },
-  ]
+    { key: 'contact', href: '#contact', labelKey: 'hospital.navContact' },
+  ].map((item) => ({ ...item, label: t(item.labelKey) }))
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur">

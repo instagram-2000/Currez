@@ -10,7 +10,7 @@ function DepartmentsSection({ data }) {
   return (
     <section id="departments" className="px-6 py-20 md:px-12">
       <Reveal>
-        <SectionEyebrow>Departments</SectionEyebrow>
+        <SectionEyebrow>{t('hospital.navDepartments')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.departments')}</h2>
       </Reveal>
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

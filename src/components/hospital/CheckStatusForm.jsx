@@ -130,7 +130,7 @@ function CheckStatusForm({ slug }) {
                   <div className="mt-3 space-y-2 border-t border-line pt-3">
                     {result.prescription?.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold tracking-wide text-muted uppercase">Prescription</p>
+                        <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('status.prescription')}</p>
                         <ul className="mt-1 space-y-0.5 text-heading">
                           {result.prescription.map((row, i) => (
                             <li key={i}>
@@ -144,7 +144,7 @@ function CheckStatusForm({ slug }) {
                     )}
                     {result.tests?.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold tracking-wide text-muted uppercase">Tests advised</p>
+                        <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('status.testsAdvised')}</p>
                         <ul className="mt-1 space-y-0.5 text-heading">
                           {result.tests.map((row, i) => (
                             <li key={i}>

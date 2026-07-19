@@ -1,29 +1,92 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { confirmAppointment } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
+import { availableSlotsForDate, isTimeWithinSchedule, weekdayKeyForDate, DAY_LABELS } from '../../utils/doctorSchedule'
+import TimeSlotPicker from '../common/TimeSlotPicker'
 
-function ConfirmPaymentModal({ appointment, doctors, onClose }) {
+const todayString = () => new Date().toISOString().slice(0, 10)
+
+// Front-desk confirmation is also where doctor availability is finally
+// checked against reality: the doctor may have changed their schedule since
+// the patient requested this slot, or another patient may since have been
+// confirmed into it. Both cases are re-validated here rather than trusting
+// whatever the patient originally picked.
+function ConfirmPaymentModal({ appointment, doctors, appointments = [], onClose }) {
   const { user } = useAuth()
   const needsDoctor = !appointment.doctorId
-  const [doctorId, setDoctorId] = useState(doctors?.[0]?.uid || '')
+  const [doctorId, setDoctorId] = useState(appointment.doctorId || doctors?.[0]?.uid || '')
+  const [date, setDate] = useState(appointment.date)
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const selectedDoctor = doctors?.find((d) => d.uid === doctorId)
+  const weekday = weekdayKeyForDate(date)
+  const daySchedule = selectedDoctor?.schedule?.[weekday]
+
+  const bookedTimes = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.id !== appointment.id && a.doctorId === doctorId && a.date === date && a.status === 'scheduled')
+        .map((a) => a.time)
+        .filter(Boolean),
+    [appointments, appointment.id, doctorId, date]
+  )
+  const slots = selectedDoctor ? availableSlotsForDate(selectedDoctor.schedule, date, bookedTimes) : []
+
+  // The time the patient originally asked for (if any) is only kept as the
+  // pre-selection when it still fits the doctor's current schedule and
+  // isn't already held by someone else's confirmed appointment.
+  const originalTimeStillValid =
+    appointment.time &&
+    doctorId === appointment.doctorId &&
+    date === appointment.date &&
+    isTimeWithinSchedule(selectedDoctor?.schedule, date, appointment.time) &&
+    !bookedTimes.includes(appointment.time)
+
+  const [time, setTime] = useState(originalTimeStillValid ? appointment.time : '')
+  const [timeTouched, setTimeTouched] = useState(false)
+
+  const scheduleChanged =
+    appointment.time && appointment.status === 'pending' && doctorId === appointment.doctorId && date === appointment.date && !originalTimeStillValid
+
   const { errors, validate, clearFieldError } = useFormValidation({
     doctorId: needsDoctor ? [validators.required('Choose a doctor to assign this appointment to.')] : [],
+    time: [validators.required('Pick a time to confirm this appointment.')],
   })
+
+  function handleDoctorChange(uid) {
+    setDoctorId(uid)
+    setTime('')
+    setTimeTouched(false)
+    clearFieldError('doctorId')
+  }
+
+  function handleDateChange(value) {
+    setDate(value)
+    setTime('')
+    setTimeTouched(false)
+  }
+
+  function handleTimeChange(value) {
+    setTime(value)
+    setTimeTouched(true)
+    clearFieldError('time')
+  }
 
   async function handleConfirm() {
     setError('')
-    if (!validate({ doctorId })) return
+    if (!validate({ doctorId, time })) return
     setSubmitting(true)
     try {
       const assignedDoctor = doctors?.find((d) => d.uid === doctorId)
       await confirmAppointment(appointment.id, {
         paymentMethod,
         confirmedBy: user.uid,
+        date,
+        time,
         ...(needsDoctor ? { doctorId, doctorName: assignedDoctor?.displayName || '' } : {}),
       })
       onClose()
@@ -39,8 +102,7 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-xl">
         <h2 className="text-base font-semibold text-heading">Confirm appointment</h2>
         <p className="mt-1 text-sm text-muted">
-          {appointment.patientName} — {appointment.doctorName || 'no doctor yet'}, {appointment.date}{' '}
-          {appointment.time}
+          {appointment.patientName} — {appointment.doctorName || 'no doctor yet'}
         </p>
 
         {needsDoctor && (
@@ -48,7 +110,7 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
             <label className="block text-sm font-medium text-body">Assign doctor</label>
             <select
               value={doctorId}
-              onChange={(e) => { setDoctorId(e.target.value); clearFieldError('doctorId') }}
+              onChange={(e) => handleDoctorChange(e.target.value)}
               className="mt-1 w-full cursor-pointer rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
             >
               {(!doctors || doctors.length === 0) && <option value="">No doctors available</option>}
@@ -61,6 +123,44 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
             {errors.doctorId && <p className="mt-1 text-xs text-red-500">{errors.doctorId}</p>}
           </div>
         )}
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-body">Date</label>
+          <input
+            type="date"
+            min={todayString()}
+            value={date}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
+          />
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-body">Time</label>
+
+          {scheduleChanged && !timeTouched && (
+            <p className="mt-1 mb-2 text-xs text-amber-500">
+              {appointment.doctorName || 'The doctor'}'s schedule no longer covers {appointment.time} on this
+              day (or it's now taken) — pick a new time below.
+            </p>
+          )}
+
+          {selectedDoctor ? (
+            <TimeSlotPicker
+              slots={slots}
+              value={time}
+              onChange={handleTimeChange}
+              emptyHint={
+                daySchedule && !daySchedule.available
+                  ? `${selectedDoctor.displayName} isn't scheduled to work on ${DAY_LABELS[weekday]}s — pick a different date.`
+                  : undefined
+              }
+            />
+          ) : (
+            <p className="mt-1 text-xs text-faint">Assign a doctor to see available times.</p>
+          )}
+          {errors.time && <p className="mt-1 text-xs text-red-500">{errors.time}</p>}
+        </div>
 
         <p className="mt-4 text-sm font-medium text-body">How was the visit fee collected?</p>
         <div className="mt-2 space-y-2">

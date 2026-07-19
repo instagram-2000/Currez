@@ -4,7 +4,8 @@ import { createPatient } from '../../firebase/patients'
 import { useAuth } from '../../contexts/AuthContext'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
-import { DAY_LABELS, weekdayKeyForDate } from '../../utils/doctorSchedule'
+import { DAY_LABELS, weekdayKeyForDate, availableSlotsForDate } from '../../utils/doctorSchedule'
+import TimeSlotPicker from '../common/TimeSlotPicker'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -12,7 +13,11 @@ const labelClass = 'block text-sm font-medium text-body'
 
 const todayString = () => new Date().toISOString().slice(0, 10)
 
-function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatientId, onCreated, onCancel }) {
+// `appointments` (the hospital's full list, already loaded by the calling
+// page) lets this modal grey out times already held by another confirmed
+// appointment with the same doctor on the same date — the public booking
+// form can't do this (no query access), but staff already have the data.
+function BookAppointmentModal({ hospitalId, patients, doctors, appointments = [], preselectedPatientId, onCreated, onCancel }) {
   const { user } = useAuth()
   const [isNewPatient, setIsNewPatient] = useState(false)
   const [patientId, setPatientId] = useState(preselectedPatientId || patients[0]?.id || '')
@@ -29,7 +34,6 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
     newPatientName: isNewPatient ? [validators.required('Patient name is required.')] : [],
     newPatientPhone: [validators.phone('Enter a valid phone number.')],
     date: [validators.required('Date is required.')],
-    time: [validators.required('Time is required.')],
   })
 
   const selectedDoctor = doctors.find((d) => d.uid === doctorId)
@@ -43,6 +47,16 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
     }
     return `${selectedDoctor.displayName} is available ${DAY_LABELS[weekday]}s ${daySchedule.start}–${daySchedule.end}.`
   }, [selectedDoctor, weekday, daySchedule])
+
+  const bookedTimes = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.doctorId === doctorId && a.date === date && a.status === 'scheduled')
+        .map((a) => a.time)
+        .filter(Boolean),
+    [appointments, doctorId, date]
+  )
+  const slots = selectedDoctor ? availableSlotsForDate(selectedDoctor.schedule, date, bookedTimes) : []
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -156,7 +170,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
             <label className={labelClass}>Doctor</label>
             <select
               value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
+              onChange={(e) => { setDoctorId(e.target.value); setTime('') }}
               className={`${inputClass} cursor-pointer`}
             >
               <option value="">No preference — reception will assign</option>
@@ -168,34 +182,44 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>Date</label>
+            <input
+              type="date"
+              min={todayString()}
+              value={date}
+              onChange={(e) => { setDate(e.target.value); setTime(''); clearFieldError('date') }}
+              className={inputClass}
+            />
+            {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+          </div>
+
+          {selectedDoctor ? (
             <div>
-              <label className={labelClass}>Date</label>
-              <input
-                type="date"
-                min={todayString()}
-                value={date}
-                onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
-                className={inputClass}
+              <label className={labelClass}>Time</label>
+              {scheduleHint && daySchedule?.available && (
+                <p className="mt-1 mb-2 text-xs text-faint">{scheduleHint}</p>
+              )}
+              <TimeSlotPicker
+                slots={slots}
+                value={time}
+                onChange={setTime}
+                allowAny
+                anyLabel="No preference — reception will assign"
+                emptyHint={scheduleHint}
               />
-              {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
             </div>
+          ) : (
             <div>
               <label className={labelClass}>Time</label>
               <input
                 type="time"
                 value={time}
-                onChange={(e) => { setTime(e.target.value); clearFieldError('time') }}
+                onChange={(e) => setTime(e.target.value)}
                 className={inputClass}
               />
-              {errors.time && <p className="mt-1 text-xs text-red-500">{errors.time}</p>}
+              <p className="mt-1 text-xs text-faint">Pick a doctor to see their available time slots.</p>
             </div>
-          </div>
-
-          {scheduleHint && (
-            <p className={`text-xs ${daySchedule?.available ? 'text-faint' : 'text-amber-500'}`}>
-              {scheduleHint}
-            </p>
           )}
 
           <div>

@@ -4,6 +4,7 @@ import { createHospital, updateHospital, DEFAULT_OPD_HOURS } from '../../firebas
 import { useAuth } from '../../contexts/AuthContext'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
+import BrandingPreview from '../../components/superadmin/BrandingPreview'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -205,29 +206,46 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
 
       <div>
         <h3 className="text-sm font-semibold text-heading">Theme</h3>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ColorField label="Primary color" value={primaryColor} onChange={setPrimaryColor} />
-          <ColorField label="Secondary color" value={secondColor} onChange={setSecondColor} />
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Background image URL">
-            <input
-              type="url"
-              value={bgImage}
-              onChange={(e) => { setBgImage(e.target.value); clearFieldError('bgImage') }}
-              className={inputClass}
+        <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ColorField label="Primary color" value={primaryColor} onChange={setPrimaryColor} />
+              <ColorField label="Secondary color" value={secondColor} onChange={setSecondColor} />
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Background image URL">
+                <input
+                  type="url"
+                  value={bgImage}
+                  onChange={(e) => { setBgImage(e.target.value); clearFieldError('bgImage') }}
+                  className={inputClass}
+                />
+                {errors.bgImage && <p className="mt-1 text-xs text-red-500">{errors.bgImage}</p>}
+              </Field>
+              <Field label="Logo URL">
+                <input
+                  type="url"
+                  value={smallLogo}
+                  onChange={(e) => { setSmallLogo(e.target.value); clearFieldError('smallLogo') }}
+                  className={inputClass}
+                />
+                {errors.smallLogo && <p className="mt-1 text-xs text-red-500">{errors.smallLogo}</p>}
+              </Field>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-medium text-faint uppercase tracking-wide">Live preview</p>
+            <BrandingPreview
+              title={title}
+              primaryColor={primaryColor}
+              secondColor={secondColor}
+              bgImage={bgImage}
+              smallLogo={smallLogo}
+              heroHeadline={heroHeadline}
+              heroSubtitle={heroSubtitle}
             />
-            {errors.bgImage && <p className="mt-1 text-xs text-red-500">{errors.bgImage}</p>}
-          </Field>
-          <Field label="Logo URL">
-            <input
-              type="url"
-              value={smallLogo}
-              onChange={(e) => { setSmallLogo(e.target.value); clearFieldError('smallLogo') }}
-              className={inputClass}
-            />
-            {errors.smallLogo && <p className="mt-1 text-xs text-red-500">{errors.smallLogo}</p>}
-          </Field>
+          </div>
         </div>
       </div>
 

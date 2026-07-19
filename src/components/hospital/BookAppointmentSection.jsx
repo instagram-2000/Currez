@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPatient } from '../../firebase/patients'
 import { createAppointment } from '../../firebase/appointments'
+import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 
@@ -14,6 +15,7 @@ const todayString = () => new Date().toISOString().slice(0, 10)
 // confirm and schedule, so it still flows into the same pending-appointment
 // pipeline the rest of the app already uses (token, front-desk confirm, etc).
 function BookAppointmentSection({ config }) {
+  const { t } = useLanguage()
   const departments = config.optionals?.departments?.items ?? []
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -56,19 +58,15 @@ function BookAppointmentSection({ config }) {
   return (
     <section className="px-6 py-20 md:px-12">
       <Reveal>
-        <SectionEyebrow>Book Appointment</SectionEyebrow>
-        <h2 className="mt-3 text-3xl font-bold text-heading">Request an appointment</h2>
-        <p className="mt-2 max-w-md text-sm text-body">
-          We'll confirm your slot by phone within 30 minutes during OPD hours.
-        </p>
+        <SectionEyebrow>{t('booking.sectionEyebrow')}</SectionEyebrow>
+        <h2 className="mt-3 text-3xl font-bold text-heading">{t('booking.sectionTitle')}</h2>
+        <p className="mt-2 max-w-md text-sm text-body">{t('booking.sectionSubtitle')}</p>
       </Reveal>
 
       <Reveal delay={100} className="mt-8 max-w-2xl">
         {submitted ? (
           <div className="rounded-xl border border-line bg-card p-6">
-            <p className="text-heading">
-              Request received — we'll call you shortly to confirm. Your reference token is:
-            </p>
+            <p className="text-heading">{t('booking.sectionReceived')}</p>
             <p
               className="mt-3 inline-block rounded-lg bg-card-strong px-4 py-2 font-mono text-lg font-bold tracking-widest"
               style={{ color: 'var(--tenant-primary)' }}
@@ -79,18 +77,18 @@ function BookAppointmentSection({ config }) {
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className={labelClass}>Full name</label>
+              <label className={labelClass}>{t('booking.fullName')}</label>
               <input
                 type="text"
                 required
-                placeholder="Your name"
+                placeholder={t('booking.yourName')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={inputClass}
               />
             </div>
             <div>
-              <label className={labelClass}>Phone number</label>
+              <label className={labelClass}>{t('booking.phoneNumber')}</label>
               <input
                 type="tel"
                 required
@@ -102,7 +100,7 @@ function BookAppointmentSection({ config }) {
             </div>
             {departments.length > 0 && (
               <div>
-                <label className={labelClass}>Department</label>
+                <label className={labelClass}>{t('booking.department')}</label>
                 <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
@@ -117,7 +115,7 @@ function BookAppointmentSection({ config }) {
               </div>
             )}
             <div>
-              <label className={labelClass}>Preferred date</label>
+              <label className={labelClass}>{t('booking.preferredDate')}</label>
               <input
                 type="date"
                 required
@@ -137,7 +135,7 @@ function BookAppointmentSection({ config }) {
                 className="cursor-pointer rounded-lg border px-6 py-2.5 text-sm font-medium transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)' }}
               >
-                {submitting ? 'Sending…' : 'Request Appointment'}
+                {submitting ? t('booking.sectionSubmitting') : t('booking.sectionSubmit')}
               </button>
             </div>
           </form>
