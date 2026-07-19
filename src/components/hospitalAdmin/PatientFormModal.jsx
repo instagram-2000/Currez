@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { createPatient } from '../../firebase/patients'
 import { useAuth } from '../../contexts/AuthContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -13,10 +15,16 @@ function PatientFormModal({ hospitalId, onCreated, onCancel }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    name: [validators.required('Patient name is required.')],
+    phone: [validators.phone('Enter a valid phone number.')],
+    email: [validators.email('Enter a valid email address.')],
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!validate({ name, phone, email })) return
     setSubmitting(true)
     try {
       await createPatient(hospitalId, { name, phone, email }, user.uid)
@@ -36,15 +44,18 @@ function PatientFormModal({ hospitalId, onCreated, onCancel }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <label className={labelClass}>Name</label>
-            <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+            <input type="text" value={name} onChange={(e) => { setName(e.target.value); clearFieldError('name') }} className={inputClass} />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
           </div>
           <div>
             <label className={labelClass}>Phone</label>
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+            <input type="text" value={phone} onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }} className={inputClass} />
+            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
           </div>
           <div>
             <label className={labelClass}>Email (optional)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+            <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }} className={inputClass} />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}

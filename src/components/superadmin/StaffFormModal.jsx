@@ -3,6 +3,8 @@ import { createStaffAuthAccount } from '../../firebase/secondaryAuth'
 import { createUserDoc } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { CREATABLE_STAFF_ROLES, ROLES, ROLE_LABELS } from '../../utils/roles'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 import { generatePassword } from '../../utils/generatePassword'
 import { DEFAULT_SCHEDULE } from '../../utils/doctorSchedule'
 
@@ -21,10 +23,17 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
   const [specialization, setSpecialization] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    displayName: [validators.required('Display name is required.')],
+    email: [validators.required('Email is required.'), validators.email('Enter a valid email address.')],
+    password: [validators.required('Password is required.'), validators.minLength(6, 'Password must be at least 6 characters.')],
+    specialization: role === ROLES.DOCTOR ? [validators.required('Specialization is required for doctors.')] : [],
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!validate({ displayName, email, password, specialization })) return
     setSubmitting(true)
     try {
       const trimmedEmail = email.trim()
@@ -58,20 +67,21 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
             <input
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e) => { setDisplayName(e.target.value); clearFieldError('displayName') }}
               className={inputClass}
             />
+            {errors.displayName && <p className="mt-1 text-xs text-red-500">{errors.displayName}</p>}
           </div>
 
           <div>
             <label className={labelClass}>Email</label>
             <input
               type="email"
-              required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }}
               className={inputClass}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           <div>
@@ -96,9 +106,10 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
                 type="text"
                 placeholder="e.g. Cardiologist"
                 value={specialization}
-                onChange={(e) => setSpecialization(e.target.value)}
+                onChange={(e) => { setSpecialization(e.target.value); clearFieldError('specialization') }}
                 className={inputClass}
               />
+              {errors.specialization && <p className="mt-1 text-xs text-red-500">{errors.specialization}</p>}
               <p className="mt-1 text-xs text-faint">
                 A default Mon–Fri, 9am–5pm schedule is created — edit it after adding this doctor.
               </p>
@@ -110,12 +121,11 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
             <div className="mt-1 flex gap-2">
               <input
                 type="text"
-                required
-                minLength={6}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError('password') }}
                 className={`${inputClass} mt-0 font-mono`}
               />
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
               <button
                 type="button"
                 onClick={() => setPassword(generatePassword())}

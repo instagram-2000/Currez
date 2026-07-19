@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { completeAppointmentWithNotes } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -26,6 +28,9 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
   const [tests, setTests] = useState(appointment.tests?.length ? appointment.tests : [])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    concerns: readOnly ? [] : [validators.required('Note the patient concerns before completing the visit.')],
+  })
 
   function updateMedicine(index, field, value) {
     setPrescription((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)))
@@ -37,12 +42,8 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!concerns.trim()) {
-      setError('Note the patient concerns before completing the visit.')
-      return
-    }
-
     setError('')
+    if (!validate({ concerns })) return
     setSubmitting(true)
     try {
       await completeAppointmentWithNotes(appointment.id, {
@@ -77,14 +78,16 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
                 {concerns || '—'}
               </p>
             ) : (
-              <textarea
-                required
-                rows={3}
-                placeholder="What the patient came in for, symptoms, examination notes…"
-                value={concerns}
-                onChange={(e) => setConcerns(e.target.value)}
-                className={inputClass}
-              />
+              <>
+                <textarea
+                  rows={3}
+                  placeholder="What the patient came in for, symptoms, examination notes…"
+                  value={concerns}
+                  onChange={(e) => { setConcerns(e.target.value); clearFieldError('concerns') }}
+                  className={inputClass}
+                />
+                {errors.concerns && <p className="mt-1 text-xs text-red-500">{errors.concerns}</p>}
+              </>
             )}
           </div>
 

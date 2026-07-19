@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { getAppointmentByToken, getAppointmentsByPhone } from '../../firebase/appointments'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 import NavIcon from '../common/NavIcon'
 
 const inputClass =
@@ -23,6 +25,9 @@ function CheckStatusForm({ slug }) {
   const [results, setResults] = useState(undefined)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    phone: [validators.phone('Enter a valid phone number.')],
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -35,6 +40,8 @@ function CheckStatusForm({ slug }) {
       setError(t('status.missingBoth'))
       return
     }
+
+    if (!validate({ phone })) return
 
     setSubmitting(true)
     try {
@@ -69,7 +76,8 @@ function CheckStatusForm({ slug }) {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label className={labelClass}>{t('status.phoneNumber')}</label>
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+          <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }} className={inputClass} />
+          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
         </div>
         <div>
           <label className={labelClass}>{t('status.token')}</label>

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { confirmAppointment } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 function ConfirmPaymentModal({ appointment, doctors, onClose }) {
   const { user } = useAuth()
@@ -9,15 +11,14 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const { errors, validate, clearFieldError } = useFormValidation({
+    doctorId: needsDoctor ? [validators.required('Choose a doctor to assign this appointment to.')] : [],
+  })
 
   async function handleConfirm() {
-    if (needsDoctor && !doctorId) {
-      setError('Choose a doctor to assign this appointment to.')
-      return
-    }
-
-    setSubmitting(true)
     setError('')
+    if (!validate({ doctorId })) return
+    setSubmitting(true)
     try {
       const assignedDoctor = doctors?.find((d) => d.uid === doctorId)
       await confirmAppointment(appointment.id, {
@@ -47,7 +48,7 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
             <label className="block text-sm font-medium text-body">Assign doctor</label>
             <select
               value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
+              onChange={(e) => { setDoctorId(e.target.value); clearFieldError('doctorId') }}
               className="mt-1 w-full cursor-pointer rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
             >
               {(!doctors || doctors.length === 0) && <option value="">No doctors available</option>}
@@ -57,6 +58,7 @@ function ConfirmPaymentModal({ appointment, doctors, onClose }) {
                 </option>
               ))}
             </select>
+            {errors.doctorId && <p className="mt-1 text-xs text-red-500">{errors.doctorId}</p>}
           </div>
         )}
 

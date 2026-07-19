@@ -4,6 +4,8 @@ import { signIn, signOutUser } from '../../firebase/auth'
 import { subscribeHospital } from '../../firebase/hospitals'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES, ROLE_LABELS } from '../../utils/roles'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 import Spinner from '../../components/common/Spinner'
 import ThemeToggle from '../../components/common/ThemeToggle'
 import NavIcon from '../../components/common/NavIcon'
@@ -47,6 +49,10 @@ function HospitalLoginPage({ tenantSlug }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    email: [validators.required('Email is required.'), validators.email('Enter a valid email address.')],
+    password: [validators.required('Password is required.')],
+  })
 
   useEffect(
     () => subscribeHospital(tenantSlug, (config) => setHospitalTitle(config?.title || '')),
@@ -86,6 +92,7 @@ function HospitalLoginPage({ tenantSlug }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!validate({ email, password })) return
     setSubmitting(true)
     try {
       await signIn(email.trim(), password)
@@ -178,13 +185,13 @@ function HospitalLoginPage({ tenantSlug }) {
               <input
                 id="email"
                 type="email"
-                required
                 autoComplete="username"
                 placeholder="you@hospital.in"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }}
                 className={inputClass}
               />
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
             </div>
 
             <div>
@@ -194,12 +201,12 @@ function HospitalLoginPage({ tenantSlug }) {
               <input
                 id="password"
                 type="password"
-                required
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError('password') }}
                 className={inputClass}
               />
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}

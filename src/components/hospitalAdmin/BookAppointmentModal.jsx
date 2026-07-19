@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { createAppointment } from '../../firebase/appointments'
 import { createPatient } from '../../firebase/patients'
 import { useAuth } from '../../contexts/AuthContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 import { DAY_LABELS, weekdayKeyForDate } from '../../utils/doctorSchedule'
 
 const inputClass =
@@ -23,6 +25,12 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    newPatientName: isNewPatient ? [validators.required('Patient name is required.')] : [],
+    newPatientPhone: [validators.phone('Enter a valid phone number.')],
+    date: [validators.required('Date is required.')],
+    time: [validators.required('Time is required.')],
+  })
 
   const selectedDoctor = doctors.find((d) => d.uid === doctorId)
   const weekday = weekdayKeyForDate(date)
@@ -40,10 +48,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
     e.preventDefault()
     setError('')
 
-    if (isNewPatient && !newPatientName.trim()) {
-      setError('Patient name is required.')
-      return
-    }
+    if (!validate({ newPatientName, newPatientPhone, date, time })) return
     if (!isNewPatient && !patientId) {
       setError('Add a patient before booking appointments.')
       return
@@ -113,19 +118,20 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
               <div className="mt-2 space-y-2 rounded-lg border border-line bg-card p-3">
                 <input
                   type="text"
-                  required
                   placeholder="Name"
                   value={newPatientName}
-                  onChange={(e) => setNewPatientName(e.target.value)}
+                  onChange={(e) => { setNewPatientName(e.target.value); clearFieldError('newPatientName') }}
                   className={inputClass + ' mt-0'}
                 />
+                {errors.newPatientName && <p className="mt-1 text-xs text-red-500">{errors.newPatientName}</p>}
                 <input
                   type="text"
                   placeholder="Phone"
                   value={newPatientPhone}
-                  onChange={(e) => setNewPatientPhone(e.target.value)}
+                  onChange={(e) => { setNewPatientPhone(e.target.value); clearFieldError('newPatientPhone') }}
                   className={inputClass + ' mt-0'}
                 />
+                {errors.newPatientPhone && <p className="mt-1 text-xs text-red-500">{errors.newPatientPhone}</p>}
                 <input
                   type="email"
                   placeholder="Email (optional)"
@@ -167,22 +173,22 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
               <label className={labelClass}>Date</label>
               <input
                 type="date"
-                required
                 min={todayString()}
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
                 className={inputClass}
               />
+              {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
             </div>
             <div>
               <label className={labelClass}>Time</label>
               <input
                 type="time"
-                required
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => { setTime(e.target.value); clearFieldError('time') }}
                 className={inputClass}
               />
+              {errors.time && <p className="mt-1 text-xs text-red-500">{errors.time}</p>}
             </div>
           </div>
 

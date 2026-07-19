@@ -5,6 +5,8 @@ import { subscribeActiveDoctors } from '../../firebase/users'
 import { createPatient } from '../../firebase/patients'
 import { createAppointment } from '../../firebase/appointments'
 import { weekdayKeyForDate } from '../../utils/doctorSchedule'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 import { useLanguage } from '../../contexts/LanguageContext'
 import NavIcon from '../common/NavIcon'
 
@@ -31,6 +33,12 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    name: [validators.required('Name is required.')],
+    phone: [validators.required('Phone is required.'), validators.phone('Enter a valid phone number.')],
+    date: [validators.required('Date is required.')],
+    time: [validators.required('Time is required.')],
+  })
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
   useEffect(() => subscribeActiveDoctors(slug, setDoctors), [slug])
@@ -42,6 +50,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!validate({ name, phone, date, time })) return
     setSubmitting(true)
     try {
       const patientId = await createPatient(slug, { name, phone, email: '' }, 'public')
@@ -130,24 +139,24 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
           <label className={labelClass}>{t('booking.yourName')}</label>
           <input
             type="text"
-            required
             placeholder="Full name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); clearFieldError('name') }}
             className={inputClass}
           />
+          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
         </div>
 
         <div>
           <label className={labelClass}>{t('booking.phoneNumber')}</label>
           <input
             type="tel"
-            required
             placeholder="+91"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }}
             className={inputClass}
           />
+          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
         </div>
 
         <div>
@@ -171,16 +180,17 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
             <label className={labelClass}>Preferred date</label>
             <input
               type="date"
-              required
               min={todayString()}
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
               className={inputClass}
             />
+            {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
           </div>
           <div>
             <label className={labelClass}>Preferred time</label>
-            <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+            <input type="time" value={time} onChange={(e) => { setTime(e.target.value); clearFieldError('time') }} className={inputClass} />
+            {errors.time && <p className="mt-1 text-xs text-red-500">{errors.time}</p>}
           </div>
         </div>
 

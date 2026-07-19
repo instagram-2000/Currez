@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createHospital, updateHospital, DEFAULT_OPD_HOURS } from '../../firebase/hospitals'
 import { useAuth } from '../../contexts/AuthContext'
+import { validators } from '../../utils/validations'
+import { useFormValidation } from '../../hooks/useFormValidation'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -67,11 +69,22 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const { errors, validate, clearFieldError } = useFormValidation({
+    slug: [validators.required('Slug is required.'), validators.slug('Use only lowercase letters, numbers and hyphens.')],
+    title: [validators.required('Hospital name is required.')],
+    emergencyPhone: [validators.phone('Enter a valid phone number.')],
+    phone: [validators.phone('Enter a valid phone number.')],
+    email: [validators.email('Enter a valid email address.')],
+    bgImage: [validators.url('Enter a valid URL.')],
+    smallLogo: [validators.url('Enter a valid URL.')],
+    yearsServing: [validators.number('Must be a valid number.')],
+  })
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setSaved(false)
+    if (!validate({ slug, title, emergencyPhone, phone, email, bgImage, smallLogo, yearsServing })) return
     setSubmitting(true)
 
     const data = {
@@ -114,11 +127,10 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
         <Field label="Subdomain slug">
           <input
             type="text"
-            required
             disabled={mode === 'edit'}
             placeholder="e.g. sunrise-hospital"
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => { setSlug(e.target.value); clearFieldError('slug') }}
             className={`${inputClass} ${mode === 'edit' ? 'cursor-not-allowed opacity-50' : ''}`}
           />
           {mode === 'create' && (
@@ -126,16 +138,17 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
               Lowercase letters, numbers and hyphens only. Cannot be changed later.
             </p>
           )}
+          {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
         </Field>
 
         <Field label="Hospital name">
           <input
             type="text"
-            required
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); clearFieldError('title') }}
             className={inputClass}
           />
+          {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
         </Field>
       </div>
 
@@ -182,9 +195,10 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             <input
               type="text"
               value={emergencyPhone}
-              onChange={(e) => setEmergencyPhone(e.target.value)}
+              onChange={(e) => { setEmergencyPhone(e.target.value); clearFieldError('emergencyPhone') }}
               className={inputClass}
             />
+            {errors.emergencyPhone && <p className="mt-1 text-xs text-red-500">{errors.emergencyPhone}</p>}
           </Field>
         </div>
       </div>
@@ -200,17 +214,19 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             <input
               type="url"
               value={bgImage}
-              onChange={(e) => setBgImage(e.target.value)}
+              onChange={(e) => { setBgImage(e.target.value); clearFieldError('bgImage') }}
               className={inputClass}
             />
+            {errors.bgImage && <p className="mt-1 text-xs text-red-500">{errors.bgImage}</p>}
           </Field>
           <Field label="Logo URL">
             <input
               type="url"
               value={smallLogo}
-              onChange={(e) => setSmallLogo(e.target.value)}
+              onChange={(e) => { setSmallLogo(e.target.value); clearFieldError('smallLogo') }}
               className={inputClass}
             />
+            {errors.smallLogo && <p className="mt-1 text-xs text-red-500">{errors.smallLogo}</p>}
           </Field>
         </div>
       </div>
@@ -222,10 +238,12 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
           </Field>
           <Field label="Phone">
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+            <input type="text" value={phone} onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }} className={inputClass} />
+            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
           </Field>
           <Field label="Email">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+            <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); clearFieldError('email') }} className={inputClass} />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </Field>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -234,9 +252,10 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
               type="number"
               min="0"
               value={yearsServing}
-              onChange={(e) => setYearsServing(e.target.value)}
+              onChange={(e) => { setYearsServing(e.target.value); clearFieldError('yearsServing') }}
               className={inputClass}
             />
+            {errors.yearsServing && <p className="mt-1 text-xs text-red-500">{errors.yearsServing}</p>}
           </Field>
         </div>
       </div>
