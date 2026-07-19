@@ -10,6 +10,10 @@ import {
 const STORAGE_KEY = "Currez-theme";
 const ThemeContext = createContext(null);
 
+// Light is the app-wide default regardless of OS/browser preference — a
+// visitor's first impression should match the brand, not whatever their
+// system happens to be set to. Once someone picks a theme (via the toggle),
+// that explicit choice is what's remembered.
 function readStoredTheme() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -17,9 +21,7 @@ function readStoredTheme() {
   } catch {
     // ignore (private browsing, storage disabled, etc.)
   }
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "light";
 }
 
 // App-wide light/dark toggle. Applies a `.dark` class to <html> which every

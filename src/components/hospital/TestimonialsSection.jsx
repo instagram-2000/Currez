@@ -1,4 +1,5 @@
 import { useLanguage } from '../../contexts/LanguageContext'
+import { initials } from '../../utils/initials'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 
@@ -18,13 +19,32 @@ function TestimonialsSection({ data }) {
           <Reveal
             key={item.name}
             delay={i * 80}
-            className="rounded-xl border border-line bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:border-line-strong"
+            className="relative overflow-hidden rounded-2xl border border-line bg-card p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-line-strong hover:shadow-lg"
           >
-            <p className="text-sm" style={{ color: 'var(--tenant-primary)' }}>
+            <span
+              className="pointer-events-none absolute -top-3 right-4 font-serif text-7xl leading-none opacity-10"
+              style={{ color: 'var(--tenant-primary)' }}
+              aria-hidden="true"
+            >
+              &rdquo;
+            </span>
+            <p className="relative text-sm tracking-wide" style={{ color: 'var(--tenant-primary)' }}>
               {'★'.repeat(item.rating ?? 5)}
+              <span className="text-line-strong">{'★'.repeat(5 - (item.rating ?? 5))}</span>
             </p>
-            <p className="mt-3 text-sm text-body">"{item.message}"</p>
-            <p className="mt-4 text-sm text-muted">— {item.name}</p>
+            <p className="relative mt-3 text-sm text-body">&ldquo;{item.message}&rdquo;</p>
+            <div className="relative mt-5 flex items-center gap-3">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                style={{
+                  background: 'color-mix(in srgb, var(--tenant-primary) 15%, transparent)',
+                  color: 'var(--tenant-primary)',
+                }}
+              >
+                {initials(item.name)}
+              </span>
+              <p className="text-sm font-medium text-heading">{item.name}</p>
+            </div>
           </Reveal>
         ))}
       </div>

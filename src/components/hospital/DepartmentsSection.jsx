@@ -1,4 +1,5 @@
 import { useLanguage } from '../../contexts/LanguageContext'
+import { initials } from '../../utils/initials'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 
@@ -18,9 +19,22 @@ function DepartmentsSection({ data }) {
           <Reveal
             key={item.name}
             delay={i * 60}
-            className="rounded-xl border border-line bg-card p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:border-line-strong"
+            className="group relative overflow-hidden rounded-2xl border border-line bg-card p-7 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-line-strong hover:shadow-lg"
           >
-            <h3 className="font-semibold text-heading">{item.name}</h3>
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+              style={{ backgroundColor: 'var(--tenant-primary)' }}
+            />
+            <span
+              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-base font-bold"
+              style={{
+                background: 'color-mix(in srgb, var(--tenant-primary) 15%, transparent)',
+                color: 'var(--tenant-primary)',
+              }}
+            >
+              {initials(item.name)}
+            </span>
+            <h3 className="mt-4 font-semibold text-heading">{item.name}</h3>
             <p className="mt-2 text-sm text-body">{item.description}</p>
           </Reveal>
         ))}

@@ -33,6 +33,21 @@
   --color-body: #cbd5e1;
   --color-muted: #94a3b8;
   --color-faint: #64748b;
+  /* Tells the browser to render native form controls (a <select>'s own
+     dropdown popup, date pickers, etc.) with a dark palette — without this,
+     the popup list ignores our CSS and renders white-on-white (invisible)
+     since browsers pick the OS/light scheme by default. */
+  color-scheme: dark;
+}
+
+/* Belt-and-suspenders on top of `color-scheme` above: some Chromium builds
+   only apply that to the select's own (closed) box and still render the
+   opened dropdown's <option> rows with a light background, so state it
+   explicitly too — Chromium-based browsers do honor background-color/color
+   set directly on <option>. */
+.dark select option {
+  background-color: #0f172a;
+  color: #ffffff;
 }
 
 body {

@@ -23,9 +23,7 @@ function SuperAdminLayout() {
         />
         <div className="relative px-6 py-5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/15 text-sm font-bold text-indigo-600 ring-1 ring-indigo-500/30 dark:text-indigo-300">
-              M
-            </span>
+            <img src="/currez-mark.png" alt="Currez" className="h-8 w-8 rounded-lg object-contain" />
             <div>
               <span className="block text-sm font-semibold text-heading">
                 Currez

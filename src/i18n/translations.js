@@ -28,7 +28,7 @@ export const translations = {
     "hospital.heroSubtitle":
       "Quality healthcare, trusted specialists, and appointments that fit your life.",
     "hospital.bookAnAppointment": "Book an Appointment",
-    "hospital.allRightsReserved": "All rights reserved.",
+    "hospital.allRightsReserved": "All rights reserved || Version 1.0.0",
     "hospital.checkAppointmentStatus": "Check appointment status",
     "hospital.ourServices": "Our Services",
     "hospital.departments": "Departments",

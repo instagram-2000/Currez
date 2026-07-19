@@ -1,6 +1,31 @@
 import { useState } from "react";
 import Reveal from "../components/common/Reveal";
 import ThemeToggle from "../components/common/ThemeToggle";
+import NavIcon from "../components/common/NavIcon";
+import LeadCaptureModal from "../components/company/LeadCaptureModal";
+
+const LEAD_MODALS = {
+  demo: {
+    title: "Book a demo",
+    subtitle: "See Currez running for a hospital like yours — pick a time and we'll set it up.",
+    intent: "Book a Demo",
+  },
+  onboard: {
+    title: "Get your hospital onboarded",
+    subtitle: "Tell us a bit about your hospital and we'll get your branded booking site live.",
+    intent: "Get Your Hospital Onboarded",
+  },
+  sales: {
+    title: "Talk to sales",
+    subtitle: "Hospital groups & chains — let's figure out a plan that fits. We'll reach out shortly.",
+    intent: "Talk to Sales — Custom Plan",
+  },
+  contact: {
+    title: "Get in touch",
+    subtitle: "Questions, feedback, anything at all — leave your details and we'll get back to you soon.",
+    intent: "General Contact",
+  },
+}
 
 const NAV_LINKS = [
   { href: "#features", label: "Features" },
@@ -39,6 +64,9 @@ const HOW_IT_WORKS = [
   },
 ];
 
+// Custom sits in the middle and is the only plan actually offered right
+// now — Starter/Growth pricing isn't finalized yet, so they're shown as a
+// preview (marked "Coming soon") rather than something bookable.
 const PRICING_TIERS = [
   {
     name: "Starter",
@@ -50,21 +78,7 @@ const PRICING_TIERS = [
       "Billing & invoicing",
       "Email support",
     ],
-    cta: "Get started",
-    highlighted: false,
-  },
-  {
-    name: "Growth",
-    price: "₹42k",
-    period: "/mo",
-    tagline: "For multi-department hospitals. Up to 250 beds.",
-    features: [
-      "Everything in Starter",
-      "Multi-doctor scheduling",
-      "Priority support",
-    ],
-    cta: "Book a demo",
-    highlighted: true,
+    comingSoon: true,
   },
   {
     name: "Custom",
@@ -77,11 +91,21 @@ const PRICING_TIERS = [
       "Dedicated success manager",
     ],
     cta: "Talk to sales",
-    highlighted: false,
+    highlighted: true,
+  },
+  {
+    name: "Growth",
+    price: "₹42k",
+    period: "/mo",
+    tagline: "For multi-department hospitals. Up to 250 beds.",
+    features: [
+      "Everything in Starter",
+      "Multi-doctor scheduling",
+      "Priority support",
+    ],
+    comingSoon: true,
   },
 ];
-
-const MAILTO = "mailto:sales@Currez.com";
 
 // Centers section content and keeps generous side margins on wide screens —
 // the full-bleed colored bands (stats/CTA) stay on the outer <section>.
@@ -89,13 +113,17 @@ const CONTAINER = "mx-auto max-w-7xl px-6 sm:px-10 lg:px-16 xl:px-24";
 
 function CompanyLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
 
   return (
     <div className="min-h-screen bg-page text-heading">
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-line bg-page/80 backdrop-blur">
         <div className={`flex items-center justify-between py-4 ${CONTAINER}`}>
-          <span className="text-lg font-semibold">Currez</span>
+          <span className="flex items-center gap-2">
+            <img src="/currez-mark.png" alt="Currez" className="h-8 w-8 rounded-lg object-contain" />
+            <span className="text-lg font-semibold">Currez</span>
+          </span>
 
           <nav className="hidden items-center gap-8 text-sm text-body md:flex">
             {NAV_LINKS.map((link) => (
@@ -111,12 +139,12 @@ function CompanyLandingPage() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <a
-              href={MAILTO}
-              className="hidden rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 sm:inline-block"
+            <button
+              onClick={() => setActiveModal("demo")}
+              className="hidden cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 sm:inline-block"
             >
               Book a demo
-            </a>
+            </button>
             <button
               onClick={() => setMenuOpen((v) => !v)}
               aria-label="Toggle menu"
@@ -160,12 +188,12 @@ function CompanyLandingPage() {
                   {link.label}
                 </a>
               ))}
-              <a
-                href={MAILTO}
-                className="rounded-full bg-indigo-600 px-4 py-2 text-center font-medium text-white"
+              <button
+                onClick={() => { setMenuOpen(false); setActiveModal("demo"); }}
+                className="cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-center font-medium text-white"
               >
                 Book a demo
-              </a>
+              </button>
             </nav>
           </div>
         )}
@@ -190,12 +218,12 @@ function CompanyLandingPage() {
           className="mt-8 flex animate-fade-in-up flex-wrap items-center gap-4"
           style={{ animationDelay: "240ms" }}
         >
-          <a
-            href={MAILTO}
-            className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+          <button
+            onClick={() => setActiveModal("onboard")}
+            className="cursor-pointer rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
           >
             Get Your Hospital Onboarded
-          </a>
+          </button>
           <a
             href="#features"
             className="text-sm font-medium text-body transition-colors hover:text-heading"
@@ -344,47 +372,58 @@ function CompanyLandingPage() {
             <Reveal
               key={tier.name}
               delay={i * 100}
-              className={`relative rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-1 ${
-                tier.highlighted
-                  ? "border-indigo-500 bg-card"
-                  : "border-line hover:border-line-strong"
+              className={`relative rounded-2xl border p-6 transition-all duration-200 ${
+                tier.comingSoon
+                  ? "border-line opacity-70"
+                  : "border-indigo-500 bg-card hover:-translate-y-1"
               }`}
             >
-              {tier.highlighted && (
+              {tier.comingSoon ? (
+                <span className="absolute -top-3 right-6 rounded-full bg-card-strong px-3 py-1 text-[11px] font-semibold text-muted ring-1 ring-line">
+                  Coming soon
+                </span>
+              ) : (
                 <span className="absolute -top-3 right-6 rounded-full bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white">
-                  Most popular
+                  Available now
                 </span>
               )}
               <p className="text-xs font-semibold uppercase tracking-wide text-faint">
                 {tier.name}
               </p>
-              <p className="mt-2 text-3xl font-bold">
-                {tier.price || "Custom"}
-                {tier.period && (
-                  <span className="text-base font-normal text-faint">
-                    {tier.period}
-                  </span>
-                )}
-              </p>
-              <p className="mt-2 text-sm text-body">{tier.tagline}</p>
-              <ul className="mt-5 space-y-2 text-sm text-body">
-                {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-indigo-500">&#10003;</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href={MAILTO}
-                className={`mt-6 block rounded-full px-4 py-2 text-center text-sm font-medium transition-colors ${
-                  tier.highlighted
-                    ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                    : "border border-line-strong text-heading hover:bg-card-strong"
-                }`}
-              >
-                {tier.cta}
-              </a>
+              {/* Pricing & feature list aren't finalized for this tier yet —
+                  blurred rather than shown as real numbers, so nobody reads
+                  ₹15k/₹42k as a committed price. */}
+              <div className={tier.comingSoon ? "pointer-events-none select-none blur-sm" : undefined}>
+                <p className="mt-2 text-3xl font-bold">
+                  {tier.price || "Custom"}
+                  {tier.period && (
+                    <span className="text-base font-normal text-faint">
+                      {tier.period}
+                    </span>
+                  )}
+                </p>
+                <p className="mt-2 text-sm text-body">{tier.tagline}</p>
+                <ul className="mt-5 space-y-2 text-sm text-body">
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <span className="mt-0.5 text-indigo-500">&#10003;</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {tier.comingSoon ? (
+                <span className="mt-6 block cursor-not-allowed rounded-full border border-line-strong px-4 py-2 text-center text-sm font-medium text-faint">
+                  Coming soon
+                </span>
+              ) : (
+                <button
+                  onClick={() => setActiveModal("sales")}
+                  className="mt-6 block w-full cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                >
+                  {tier.cta}
+                </button>
+              )}
             </Reveal>
           ))}
         </div>
@@ -417,14 +456,32 @@ function CompanyLandingPage() {
             Reach out and we'll get your hospital's branded booking site live in
             minutes.
           </p>
-          <a
-            href={MAILTO}
-            className="mt-8 inline-block rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+          <button
+            onClick={() => setActiveModal("onboard")}
+            className="mt-8 inline-block cursor-pointer rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
           >
             Get Your Hospital Onboarded
-          </a>
+          </button>
         </div>
       </Reveal>
+
+      {/* Contact us — persistent, reachable from anywhere on the page */}
+      <button
+        onClick={() => setActiveModal("contact")}
+        className="fixed bottom-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+      >
+        <NavIcon name="chat" className="h-4 w-4" />
+        Contact Us
+      </button>
+
+      {activeModal && (
+        <LeadCaptureModal
+          title={LEAD_MODALS[activeModal].title}
+          subtitle={LEAD_MODALS[activeModal].subtitle}
+          intent={LEAD_MODALS[activeModal].intent}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
 
       {/* Footer */}
       <footer
