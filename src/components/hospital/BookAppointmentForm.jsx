@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { subscribeHospital } from '../../firebase/hospitals'
 import { subscribeActiveDoctors } from '../../firebase/users'
 import { createPatient } from '../../firebase/patients'
-import { createAppointment } from '../../firebase/appointments'
+import { createAppointment, getDoctorBookedTimes } from '../../firebase/appointments'
 import { weekdayKeyForDate, availableSlotsForDate } from '../../utils/doctorSchedule'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
@@ -31,6 +31,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   const [doctorId, setDoctorId] = useState('')
   const [date, setDate] = useState(todayString())
   const [time, setTime] = useState('')
+  const [bookedTimes, setBookedTimes] = useState([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
@@ -49,13 +50,27 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
     setTime('')
   }, [doctorId, date])
 
+  // Real (if momentary) visibility into which times are already claimed —
+  // reads the PII-free doctorSlots record instead of the appointments
+  // collection itself, which this unauthenticated form has no access to.
+  useEffect(() => {
+    if (!doctorId || !date) {
+      setBookedTimes([])
+      return
+    }
+    let cancelled = false
+    getDoctorBookedTimes(slug, doctorId, date).then((times) => {
+      if (!cancelled) setBookedTimes(times)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [slug, doctorId, date])
+
   const selectedDoctor = doctors.find((d) => d.uid === doctorId)
   const weekday = weekdayKeyForDate(date)
   const daySchedule = selectedDoctor?.schedule?.[weekday]
-  // No visibility into other patients' bookings here (public/unauthenticated) —
-  // slots reflect the doctor's working hours only; reception resolves any
-  // double-booking when they confirm.
-  const slots = selectedDoctor ? availableSlotsForDate(selectedDoctor.schedule, date) : []
+  const slots = selectedDoctor ? availableSlotsForDate(selectedDoctor.schedule, date, bookedTimes) : []
 
   async function handleSubmit(e) {
     e.preventDefault()

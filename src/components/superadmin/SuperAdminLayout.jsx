@@ -1,23 +1,25 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { signOutUser } from '../../firebase/auth'
-import { useAuth } from '../../contexts/AuthContext'
-import NavIcon from '../common/NavIcon'
-import ThemeToggle from '../common/ThemeToggle'
+import { NavLink, Outlet } from "react-router-dom";
+import { signOutUser } from "../../firebase/auth";
+import { useAuth } from "../../contexts/AuthContext";
+import NavIcon from "../common/NavIcon";
+import ThemeToggle from "../common/ThemeToggle";
 
 const NAV_ITEMS = [
-  { to: '/superadmin/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/superadmin/hospitals', label: 'Hospitals', icon: 'hospitals' },
-]
+  { to: "/superadmin/dashboard", label: "Dashboard", icon: "dashboard" },
+  { to: "/superadmin/hospitals", label: "Hospitals", icon: "hospitals" },
+];
 
 function SuperAdminLayout() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-page text-heading md:flex">
       <aside className="relative overflow-hidden border-b border-line bg-surface md:w-64 md:shrink-0 md:border-b-0 md:border-r">
         <div
           className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full opacity-20 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #6366f1, transparent 70%)' }}
+          style={{
+            background: "radial-gradient(circle, #6366f1, transparent 70%)",
+          }}
         />
         <div className="relative px-6 py-5">
           <div className="flex items-center gap-2.5">
@@ -25,8 +27,12 @@ function SuperAdminLayout() {
               M
             </span>
             <div>
-              <span className="block text-sm font-semibold text-heading">MediDesk</span>
-              <span className="block text-[11px] uppercase tracking-wide text-faint">Super Admin</span>
+              <span className="block text-sm font-semibold text-heading">
+                Currez
+              </span>
+              <span className="block text-[11px] uppercase tracking-wide text-faint">
+                Super Admin
+              </span>
             </div>
           </div>
         </div>
@@ -38,8 +44,8 @@ function SuperAdminLayout() {
               className={({ isActive }) =>
                 `flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-indigo-500/15 text-indigo-600 ring-1 ring-inset ring-indigo-500/30 dark:text-indigo-300'
-                    : 'text-muted hover:bg-card-strong hover:text-heading'
+                    ? "bg-indigo-500/15 text-indigo-600 ring-1 ring-inset ring-indigo-500/30 dark:text-indigo-300"
+                    : "text-muted hover:bg-card-strong hover:text-heading"
                 }`
               }
             >
@@ -69,7 +75,7 @@ function SuperAdminLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }
 
-export default SuperAdminLayout
+export default SuperAdminLayout;

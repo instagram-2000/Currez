@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 export const firebaseConfig = {
@@ -15,3 +15,10 @@ export const firebaseConfig = {
 export const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
 export const db = getFirestore(firebaseApp)
 export const auth = getAuth(firebaseApp)
+
+// Opt-in local dev flag — points Firestore at `firebase emulators:start
+// --only firestore` instead of production, for testing rules/data changes
+// safely. Off unless explicitly set in .env.local (gitignored).
+if (import.meta.env.VITE_USE_FIRESTORE_EMULATOR === 'true') {
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+}

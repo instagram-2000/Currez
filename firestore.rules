@@ -135,6 +135,44 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // Doc ID is `{hospitalId}::{doctorId}::{date}` — which times are
+    // already claimed (pending-with-a-time or confirmed) for that doctor on
+    // that date. Deliberately holds no patient info, so it's safe to expose
+    // publicly: this is what lets the unauthenticated booking form grey out
+    // taken slots, and what createAppointment/confirmAppointment/
+    // rescheduleAppointment check+update atomically to prevent double-
+    // booking. Staff (creating/confirming/rescheduling appointments
+    // directly) need to write it too, not just the public flow.
+    match /doctorSlots/{slotId} {
+      allow get: if true;
+      allow list: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow create, update: if (request.resource.data.hospitalId is string &&
+                                 request.resource.data.doctorId is string &&
+                                 request.resource.data.date is string &&
+                                 request.resource.data.times is list) ||
+                                isHospitalStaffOf(request.resource.data.hospitalId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // Doc ID is `{hospitalId}::{digitsOnlyPhone}::{date}` — counts a phone
+    // number's public self-service bookings for one calendar date, capped
+    // client-side at 2 (see MAX_PUBLIC_BOOKINGS_PER_PHONE_PER_DAY) and
+    // re-enforced here so it can't be bypassed by calling the SDK directly:
+    // a create must start at count 1, and each update must increment by
+    // exactly 1 and never exceed 2. Only the public booking flow touches
+    // this — staff booking on a patient's behalf isn't capped.
+    match /phoneDailyCounts/{countId} {
+      allow get: if true;
+      allow list: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow create: if request.resource.data.hospitalId is string &&
+                       request.resource.data.phone is string &&
+                       request.resource.data.date is string &&
+                       request.resource.data.count == 1;
+      allow update: if request.resource.data.count == resource.data.count + 1 &&
+                       request.resource.data.count <= 2;
+      allow delete: if isSuperAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
