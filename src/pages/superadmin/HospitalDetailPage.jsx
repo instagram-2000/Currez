@@ -8,6 +8,7 @@ import HospitalFormPage from './HospitalFormPage'
 import ContentSectionEditor from '../../components/superadmin/ContentSectionEditor'
 import StaffFormModal from '../../components/superadmin/StaffFormModal'
 import CredentialsDialog from '../../components/superadmin/CredentialsDialog'
+import ResetPasswordModal from '../../components/common/ResetPasswordModal'
 import StatCard from '../../components/superadmin/StatCard'
 import StatusBadge from '../../components/superadmin/StatusBadge'
 import Spinner from '../../components/common/Spinner'
@@ -27,6 +28,7 @@ function HospitalDetailPage() {
   const [togglingStatus, setTogglingStatus] = useState(false)
   const [showStaffForm, setShowStaffForm] = useState(false)
   const [newCredentials, setNewCredentials] = useState(null)
+  const [resetStaff, setResetStaff] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
@@ -159,7 +161,13 @@ function HospitalDetailPage() {
                       <td className="px-4 py-3">
                         <StatusBadge status={member.status} kind="user" />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="flex items-center justify-end gap-3 px-4 py-3">
+                        <button
+                          onClick={() => setResetStaff(member)}
+                          className="cursor-pointer text-sm font-medium text-body hover:text-heading"
+                        >
+                          Reset password
+                        </button>
                         <button
                           onClick={() =>
                             setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')
@@ -201,6 +209,16 @@ function HospitalDetailPage() {
           email={newCredentials.email}
           password={newCredentials.password}
           onClose={() => setNewCredentials(null)}
+        />
+      )}
+
+      {resetStaff && (
+        <ResetPasswordModal
+          staff={resetStaff}
+          onClose={(result) => {
+            setResetStaff(null)
+            if (result) setNewCredentials(result)
+          }}
         />
       )}
     </div>

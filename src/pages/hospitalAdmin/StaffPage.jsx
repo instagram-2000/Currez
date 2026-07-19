@@ -3,6 +3,7 @@ import { subscribeUsersByHospital, setUserStatus } from '../../firebase/users'
 import { CREATABLE_STAFF_ROLES_BY_HOSPITAL_ADMIN, ROLES, ROLE_LABELS } from '../../utils/roles'
 import StaffFormModal from '../../components/superadmin/StaffFormModal'
 import CredentialsDialog from '../../components/superadmin/CredentialsDialog'
+import ResetPasswordModal from '../../components/common/ResetPasswordModal'
 import StatusBadge from '../../components/superadmin/StatusBadge'
 import DoctorScheduleEditor from '../../components/hospitalAdmin/DoctorScheduleEditor'
 import Spinner from '../../components/common/Spinner'
@@ -11,6 +12,7 @@ function StaffPage({ tenantSlug }) {
   const [staff, setStaff] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newCredentials, setNewCredentials] = useState(null)
+  const [resetStaff, setResetStaff] = useState(null)
   const [scheduleDoctor, setScheduleDoctor] = useState(null)
 
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
@@ -59,15 +61,21 @@ function StaffPage({ tenantSlug }) {
                 <td className="px-4 py-3">
                   <StatusBadge status={member.status} kind="user" />
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="flex items-center justify-end gap-3 px-4 py-3">
                   {member.role === ROLES.DOCTOR && (
                     <button
                       onClick={() => setScheduleDoctor(member)}
-                      className="mr-4 cursor-pointer text-sm font-medium text-body hover:text-heading"
+                      className="cursor-pointer text-sm font-medium text-body hover:text-heading"
                     >
                       Schedule
                     </button>
                   )}
+                  <button
+                    onClick={() => setResetStaff(member)}
+                    className="cursor-pointer text-sm font-medium text-body hover:text-heading"
+                  >
+                    Reset password
+                  </button>
                   <button
                     onClick={() => setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')}
                     className="cursor-pointer text-sm font-medium text-body hover:text-heading"
@@ -105,6 +113,16 @@ function StaffPage({ tenantSlug }) {
           email={newCredentials.email}
           password={newCredentials.password}
           onClose={() => setNewCredentials(null)}
+        />
+      )}
+
+      {resetStaff && (
+        <ResetPasswordModal
+          staff={resetStaff}
+          onClose={(result) => {
+            setResetStaff(null)
+            if (result) setNewCredentials(result)
+          }}
         />
       )}
 

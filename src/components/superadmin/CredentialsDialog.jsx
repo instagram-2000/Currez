@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function CredentialsDialog({ email, password, onClose }) {
+function CredentialsDialog({ email, password, title = 'Staff account created', subtitle, onClose }) {
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -13,10 +13,10 @@ function CredentialsDialog({ email, password, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-xl">
-        <h2 className="text-base font-semibold text-heading">Staff account created</h2>
+        <h2 className="text-base font-semibold text-heading">{title}</h2>
         <p className="mt-2 text-sm text-muted">
-          Share these credentials with the staff member. This password won't be shown again.
-        </p>
+          {subtitle || "Share these credentials with the staff member. This password won't be shown again."}
+       	</p>
 
         <div className="mt-4 space-y-2 rounded-lg border border-line bg-card p-4 text-sm">
           <p>
