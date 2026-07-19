@@ -75,6 +75,21 @@ export function updateAppointmentStatus(appointmentId, status) {
   return updateDoc(doc(db, APPOINTMENTS_COLLECTION, appointmentId), { status, updatedAt: serverTimestamp() })
 }
 
+// A doctor completes a visit by recording what it was for — reception/admin
+// can still force-complete via updateAppointmentStatus above with no notes,
+// but this is the path the doctor's own "Mark completed" goes through.
+export function completeAppointmentWithNotes(appointmentId, { concerns, prescription, tests, completedBy }) {
+  return updateDoc(doc(db, APPOINTMENTS_COLLECTION, appointmentId), {
+    status: 'completed',
+    concerns: concerns || '',
+    prescription: prescription || [],
+    tests: tests || [],
+    consultedAt: serverTimestamp(),
+    consultedBy: completedBy,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 // Front-desk confirms a patient-booked (pending) appointment on arrival —
 // this is what makes it visible to the doctor, and records how the visit
 // fee was collected (cash in hand, or online via the hospital's own QR —

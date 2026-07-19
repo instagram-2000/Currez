@@ -30,6 +30,18 @@ export const DEFAULT_OPTIONALS = {
   testimonials: { enabled: 'off', orderNumber: 4, items: [] },
 }
 
+// Marketing content for the landing page hero — separate from `title` so a
+// hospital can have a punchy headline distinct from its formal name.
+export const DEFAULT_HERO = { headline: '', subtitle: '' }
+
+export const DEFAULT_EMERGENCY = { enabled: false, phone: '' }
+
+export const DEFAULT_OPD_HOURS = [
+  { day: 'Mon – Sat', hours: '9:00 am – 8:00 pm' },
+  { day: 'Sunday', hours: '10:00 am – 2:00 pm' },
+  { day: 'Emergency', hours: 'Open 24/7' },
+]
+
 export function isReservedSlug(slug) {
   return RESERVED_SLUGS.has(slug.toLowerCase())
 }
@@ -38,7 +50,16 @@ export function isReservedSlug(slug) {
 // in the schema, so older/legacy docs render correctly in the admin UI
 // without requiring a data migration.
 function normalizeHospital(slug, data) {
-  return { status: 'trial', optionals: DEFAULT_OPTIONALS, ...data, slug }
+  return {
+    status: 'trial',
+    optionals: DEFAULT_OPTIONALS,
+    opdHours: DEFAULT_OPD_HOURS,
+    yearsServing: null,
+    ...data,
+    hero: { ...DEFAULT_HERO, ...data.hero },
+    emergency: { ...DEFAULT_EMERGENCY, ...data.emergency },
+    slug,
+  }
 }
 
 export function subscribeHospital(slug, callback) {
@@ -75,6 +96,10 @@ export async function createHospital(slug, data, createdBy) {
 
   await setDoc(ref, {
     optionals: DEFAULT_OPTIONALS,
+    hero: DEFAULT_HERO,
+    emergency: DEFAULT_EMERGENCY,
+    opdHours: DEFAULT_OPD_HOURS,
+    yearsServing: null,
     ...data,
     status: 'trial',
     createdAt: serverTimestamp(),

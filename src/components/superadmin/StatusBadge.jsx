@@ -1,7 +1,7 @@
 const STYLES = {
-  trial: 'bg-amber-50 text-amber-700 ring-amber-200',
-  active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  disabled: 'bg-slate-100 text-slate-500 ring-slate-200',
+  trial: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/30 dark:text-indigo-300',
+  active: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-400',
+  disabled: 'bg-card-strong text-muted ring-line',
 }
 
 const LABELS = {

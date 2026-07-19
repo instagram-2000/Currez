@@ -22,18 +22,18 @@ function PatientsPage({ tenantSlug }) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-slate-900">Patients</h1>
+        <h1 className="text-xl font-semibold text-heading">Patients</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+          className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
         >
           + Add Patient
         </button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-card">
+        <table className="min-w-full divide-y divide-line text-sm">
+          <thead className="text-left text-xs font-medium uppercase tracking-wide text-faint">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Phone</th>
@@ -41,16 +41,16 @@ function PatientsPage({ tenantSlug }) {
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {patients.map((patient) => (
-              <tr key={patient.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">{patient.name}</td>
-                <td className="px-4 py-3 text-slate-500">{patient.phone || '—'}</td>
-                <td className="px-4 py-3 text-slate-500">{patient.email || '—'}</td>
+              <tr key={patient.id} className="transition-colors hover:bg-card-strong">
+                <td className="px-4 py-3 font-medium text-heading">{patient.name}</td>
+                <td className="px-4 py-3 text-muted">{patient.phone || '—'}</td>
+                <td className="px-4 py-3 text-muted">{patient.email || '—'}</td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => setBookingForPatientId(patient.id)}
-                    className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900"
+                    className="cursor-pointer text-sm font-medium text-body hover:text-heading"
                   >
                     Book appointment
                   </button>
@@ -59,7 +59,7 @@ function PatientsPage({ tenantSlug }) {
             ))}
             {patients.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-faint">
                   No patients yet.
                 </td>
               </tr>

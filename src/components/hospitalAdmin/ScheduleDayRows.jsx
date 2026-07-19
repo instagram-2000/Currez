@@ -11,10 +11,10 @@ function ScheduleDayRows({ schedule, onChangeDay, readOnly = false }) {
         return (
           <div
             key={day}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3"
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card p-3"
           >
             <label
-              className={`flex w-28 shrink-0 items-center gap-2 text-sm font-medium text-slate-700 ${
+              className={`flex w-28 shrink-0 items-center gap-2 text-sm font-medium text-body ${
                 readOnly ? '' : 'cursor-pointer'
               }`}
             >
@@ -23,7 +23,7 @@ function ScheduleDayRows({ schedule, onChangeDay, readOnly = false }) {
                 checked={daySchedule.available}
                 disabled={readOnly}
                 onChange={(e) => onChangeDay(day, { available: e.target.checked })}
-                className={`h-4 w-4 rounded border-slate-300 ${readOnly ? '' : 'cursor-pointer'}`}
+                className={`h-4 w-4 rounded border-line-strong bg-card ${readOnly ? '' : 'cursor-pointer'}`}
               />
               {DAY_LABELS[day]}
             </label>
@@ -32,15 +32,15 @@ function ScheduleDayRows({ schedule, onChangeDay, readOnly = false }) {
               disabled={readOnly || !daySchedule.available}
               value={daySchedule.start}
               onChange={(e) => onChangeDay(day, { start: e.target.value })}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              className="rounded-lg border border-line bg-card px-2 py-1 text-sm text-heading focus:border-line-strong focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             />
-            <span className="text-sm text-slate-400">to</span>
+            <span className="text-sm text-faint">to</span>
             <input
               type="time"
               disabled={readOnly || !daySchedule.available}
               value={daySchedule.end}
               onChange={(e) => onChangeDay(day, { end: e.target.value })}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              className="rounded-lg border border-line bg-card px-2 py-1 text-sm text-heading focus:border-line-strong focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             />
           </div>
         )

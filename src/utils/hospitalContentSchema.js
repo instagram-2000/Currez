@@ -1,7 +1,9 @@
 // Field schema for each editable content section on a hospital's public
 // landing page. Drives the generic ContentSectionEditor so services,
-// departments, doctors and testimonials share one implementation instead
-// of four near-identical editors.
+// departments and testimonials share one implementation instead of near-
+// identical editors. Doctors is special-cased (`noItems: true`) — that
+// section is populated from real doctor staff accounts (Staff page), not
+// manually-entered items, so only its visibility/order is editable here.
 export const CONTENT_SECTIONS = [
   {
     key: 'services',
@@ -23,11 +25,8 @@ export const CONTENT_SECTIONS = [
   {
     key: 'doctors',
     label: 'Doctors',
-    fields: [
-      { name: 'name', label: 'Name', type: 'text' },
-      { name: 'specialization', label: 'Specialization', type: 'text' },
-      { name: 'photo', label: 'Photo URL', type: 'url' },
-    ],
+    fields: [],
+    noItems: true,
   },
   {
     key: 'testimonials',

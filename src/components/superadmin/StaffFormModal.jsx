@@ -7,7 +7,8 @@ import { generatePassword } from '../../utils/generatePassword'
 import { DEFAULT_SCHEDULE } from '../../utils/doctorSchedule'
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none'
+  'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
+const labelClass = 'block text-sm font-medium text-body'
 
 // Reused by both the superadmin (any creatable role) and hospital-admin
 // (doctors/receptionists only, via `allowedRoles`) staff-creation flows.
@@ -47,13 +48,13 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h2 className="text-base font-semibold text-slate-900">Add staff member</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-xl">
+        <h2 className="text-base font-semibold text-heading">Add staff member</h2>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Display name</label>
+            <label className={labelClass}>Display name</label>
             <input
               type="text"
               value={displayName}
@@ -63,7 +64,7 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className={labelClass}>Email</label>
             <input
               type="email"
               required
@@ -74,7 +75,7 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Role</label>
+            <label className={labelClass}>Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
@@ -90,7 +91,7 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
 
           {role === ROLES.DOCTOR && (
             <div>
-              <label className="block text-sm font-medium text-slate-700">Specialization</label>
+              <label className={labelClass}>Specialization</label>
               <input
                 type="text"
                 placeholder="e.g. Cardiologist"
@@ -98,14 +99,14 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
                 onChange={(e) => setSpecialization(e.target.value)}
                 className={inputClass}
               />
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-faint">
                 A default Mon–Fri, 9am–5pm schedule is created — edit it after adding this doctor.
               </p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Initial password</label>
+            <label className={labelClass}>Initial password</label>
             <div className="mt-1 flex gap-2">
               <input
                 type="text"
@@ -118,28 +119,28 @@ function StaffFormModal({ hospitalId, allowedRoles = CREATABLE_STAFF_ROLES, onCr
               <button
                 type="button"
                 onClick={() => setPassword(generatePassword())}
-                className="shrink-0 cursor-pointer rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="shrink-0 cursor-pointer rounded-lg border border-line px-3 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading"
               >
                 Generate
               </button>
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onCancel}
               disabled={submitting}
-              className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Creating…' : 'Create account'}
             </button>

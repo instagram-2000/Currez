@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { DAY_LABELS, weekdayKeyForDate } from '../../utils/doctorSchedule'
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none'
+  'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
+const labelClass = 'block text-sm font-medium text-body'
 
 const todayString = () => new Date().toISOString().slice(0, 10)
 
@@ -91,25 +92,25 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h2 className="text-base font-semibold text-slate-900">Book appointment</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-xl">
+        <h2 className="text-base font-semibold text-heading">Book appointment</h2>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-slate-700">Patient</label>
+              <label className={labelClass}>Patient</label>
               <button
                 type="button"
                 onClick={() => setIsNewPatient((v) => !v)}
-                className="cursor-pointer text-xs font-medium text-slate-500 hover:text-slate-700"
+                className="cursor-pointer text-xs font-medium text-muted hover:text-heading"
               >
                 {isNewPatient ? 'Choose existing patient' : '+ New patient'}
               </button>
             </div>
 
             {isNewPatient ? (
-              <div className="mt-2 space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="mt-2 space-y-2 rounded-lg border border-line bg-card p-3">
                 <input
                   type="text"
                   required
@@ -146,7 +147,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Doctor</label>
+            <label className={labelClass}>Doctor</label>
             <select
               value={doctorId}
               onChange={(e) => setDoctorId(e.target.value)}
@@ -163,7 +164,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Date</label>
+              <label className={labelClass}>Date</label>
               <input
                 type="date"
                 required
@@ -174,7 +175,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">Time</label>
+              <label className={labelClass}>Time</label>
               <input
                 type="time"
                 required
@@ -186,13 +187,13 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
           </div>
 
           {scheduleHint && (
-            <p className={`text-xs ${daySchedule?.available ? 'text-slate-400' : 'text-amber-600'}`}>
+            <p className={`text-xs ${daySchedule?.available ? 'text-faint' : 'text-amber-500'}`}>
               {scheduleHint}
             </p>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Notes (optional)</label>
+            <label className={labelClass}>Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -201,21 +202,21 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onCancel}
               disabled={submitting}
-              className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Booking…' : 'Book appointment'}
             </button>

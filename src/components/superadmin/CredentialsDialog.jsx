@@ -11,34 +11,34 @@ function CredentialsDialog({ email, password, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
-        <h2 className="text-base font-semibold text-slate-900">Staff account created</h2>
-        <p className="mt-2 text-sm text-slate-600">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-xl">
+        <h2 className="text-base font-semibold text-heading">Staff account created</h2>
+        <p className="mt-2 text-sm text-muted">
           Share these credentials with the staff member. This password won't be shown again.
         </p>
 
-        <div className="mt-4 space-y-2 rounded-lg bg-slate-50 p-4 text-sm">
+        <div className="mt-4 space-y-2 rounded-lg border border-line bg-card p-4 text-sm">
           <p>
-            <span className="text-slate-500">Email: </span>
-            <span className="font-mono text-slate-900">{email}</span>
+            <span className="text-muted">Email: </span>
+            <span className="font-mono text-heading">{email}</span>
           </p>
           <p>
-            <span className="text-slate-500">Password: </span>
-            <span className="font-mono text-slate-900">{password}</span>
+            <span className="text-muted">Password: </span>
+            <span className="font-mono text-heading">{password}</span>
           </p>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={handleCopy}
-            className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading"
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+            className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
             Done
           </button>

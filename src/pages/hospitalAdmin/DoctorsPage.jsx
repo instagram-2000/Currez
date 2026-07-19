@@ -17,12 +17,12 @@ function DoctorsPage({ tenantSlug }) {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-900">Doctors</h1>
-      <p className="mt-1 text-sm text-slate-500">View doctor availability before booking an appointment.</p>
+      <h1 className="text-xl font-semibold text-heading">Doctors</h1>
+      <p className="mt-1 text-sm text-muted">View doctor availability before booking an appointment.</p>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-card">
+        <table className="min-w-full divide-y divide-line text-sm">
+          <thead className="text-left text-xs font-medium uppercase tracking-wide text-faint">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Specialization</th>
@@ -30,18 +30,18 @@ function DoctorsPage({ tenantSlug }) {
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {doctors.map((doctor) => (
-              <tr key={doctor.uid} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">{doctor.displayName}</td>
-                <td className="px-4 py-3 text-slate-500">{doctor.specialization || '—'}</td>
+              <tr key={doctor.uid} className="transition-colors hover:bg-card-strong">
+                <td className="px-4 py-3 font-medium text-heading">{doctor.displayName}</td>
+                <td className="px-4 py-3 text-muted">{doctor.specialization || '—'}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={doctor.status} kind="user" />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => setScheduleDoctor(doctor)}
-                    className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900"
+                    className="cursor-pointer text-sm font-medium text-body hover:text-heading"
                   >
                     View schedule
                   </button>
@@ -50,7 +50,7 @@ function DoctorsPage({ tenantSlug }) {
             ))}
             {doctors.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-faint">
                   No doctors added yet.
                 </td>
               </tr>

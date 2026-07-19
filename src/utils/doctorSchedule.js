@@ -33,3 +33,27 @@ export function weekdayKeyForDate(dateString) {
   if (Number.isNaN(date.getTime())) return null
   return JS_DAY_INDEX_TO_KEY[date.getDay()]
 }
+
+export const DAY_LABELS_SHORT = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+}
+
+export function isAvailableToday(schedule) {
+  const today = JS_DAY_INDEX_TO_KEY[new Date().getDay()]
+  return Boolean(schedule?.[today]?.available)
+}
+
+// "Mon, Wed, Fri" — used as the fallback badge on a public doctor card when
+// they aren't in today. Empty string if they have no available days at all.
+export function availableDaysShortLabel(schedule) {
+  if (!schedule) return ''
+  return DAYS_OF_WEEK.filter((day) => schedule[day]?.available)
+    .map((day) => DAY_LABELS_SHORT[day])
+    .join(', ')
+}

@@ -1,1 +1,56 @@
 @import "tailwindcss";
+
+/* Enables `dark:` utilities to key off a `.dark` class on <html> (toggled by
+   ThemeContext) instead of the OS `prefers-color-scheme` media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Semantic surface/text tokens so the same class names (bg-page, bg-card,
+   text-heading, ...) resolve to light or dark values depending on whether
+   `.dark` is present on <html>. Registered via @theme so Tailwind generates
+   the full utility set (bg-*, text-*, border-*, divide-*, ring-*, ...) for
+   each one, including opacity modifiers like `bg-card/50`. */
+@theme {
+  --color-page: #f8fafc;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-card-strong: #f1f5f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-heading: #0f172a;
+  --color-body: #334155;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+}
+
+.dark {
+  --color-page: #020617;
+  --color-surface: #0f172a;
+  --color-card: rgba(255, 255, 255, 0.05);
+  --color-card-strong: rgba(255, 255, 255, 0.1);
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-strong: rgba(255, 255, 255, 0.2);
+  --color-heading: #ffffff;
+  --color-body: #cbd5e1;
+  --color-muted: #94a3b8;
+  --color-faint: #64748b;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-heading);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s ease-out both;
+}

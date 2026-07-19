@@ -1,19 +1,34 @@
 import { useEffect, useState } from 'react'
 import { subscribeHospital } from '../firebase/hospitals'
+import { subscribeActiveDoctors } from '../firebase/users'
+import { useTheme } from '../contexts/ThemeContext'
 import Spinner from '../components/common/Spinner'
 import TenantNotFound from './TenantNotFound'
+import EmergencyBar from '../components/hospital/EmergencyBar'
 import Header from '../components/hospital/Header'
 import HeroSection from '../components/hospital/HeroSection'
+import StatsBand from '../components/hospital/StatsBand'
 import SectionRenderer from '../components/hospital/SectionRenderer'
+import ContactSection from '../components/hospital/ContactSection'
+import BookAppointmentSection from '../components/hospital/BookAppointmentSection'
 import Footer from '../components/hospital/Footer'
+import BookAppointmentModal from '../components/hospital/BookAppointmentModal'
+import CheckStatusModal from '../components/hospital/CheckStatusModal'
 
 function HospitalLandingPage({ slug }) {
+  const { theme } = useTheme()
   const [config, setConfig] = useState(undefined)
+  const [doctors, setDoctors] = useState([])
+  // Header/hero/footer trigger these instead of navigating away, so booking
+  // and checking status feel instant — the /appointment and
+  // /appointment-status routes still exist for direct/shared links.
+  const [activeModal, setActiveModal] = useState(null) // 'book' | 'status' | null
 
   // Live listener, not a one-time cached fetch — a superadmin change (e.g.
   // toggling a content section on) shows up here immediately, including in
   // tabs already open, instead of waiting out a stale local cache.
   useEffect(() => subscribeHospital(slug, setConfig), [slug])
+  useEffect(() => subscribeActiveDoctors(slug, setDoctors), [slug])
 
   useEffect(() => {
     if (config?.title) document.title = config.title
@@ -22,17 +37,43 @@ function HospitalLandingPage({ slug }) {
   if (config === undefined) return <Spinner />
   if (!config) return <TenantNotFound slug={slug} />
 
+  // The hospital's own branding picks the dark-mode background (their
+  // identity); light mode intentionally overrides it with a clean neutral
+  // rather than trying to invert an arbitrary admin-picked color.
   return (
     <div
+      className={theme === 'dark' ? 'min-h-screen text-white' : 'min-h-screen bg-page text-heading'}
       style={{
-        '--tenant-primary': config.branding?.primaryColor || '#0ea5e9',
+        '--tenant-primary': config.branding?.primaryColor || '#6366f1',
         '--tenant-secondary': config.branding?.secondColor || '#0f172a',
+        backgroundColor: theme === 'dark' ? 'var(--tenant-secondary)' : undefined,
       }}
     >
-      <Header config={config} />
-      <HeroSection config={config} />
-      <SectionRenderer optionals={config.optionals} />
-      <Footer config={config} />
+      <EmergencyBar config={config} />
+      <Header
+        config={config}
+        onBookClick={() => setActiveModal('book')}
+        onStatusClick={() => setActiveModal('status')}
+      />
+      <HeroSection
+        config={config}
+        onBookClick={() => setActiveModal('book')}
+        onStatusClick={() => setActiveModal('status')}
+      />
+      <StatsBand config={config} doctorCount={doctors.length} />
+      <SectionRenderer optionals={config.optionals} doctors={doctors} />
+      <ContactSection config={config} />
+      <BookAppointmentSection config={config} />
+      <Footer config={config} onStatusClick={() => setActiveModal('status')} />
+
+      {activeModal === 'book' && (
+        <BookAppointmentModal
+          slug={slug}
+          onClose={() => setActiveModal(null)}
+          onCheckStatus={() => setActiveModal('status')}
+        />
+      )}
+      {activeModal === 'status' && <CheckStatusModal slug={slug} onClose={() => setActiveModal(null)} />}
     </div>
   )
 }

@@ -38,6 +38,8 @@ export const translations = {
       "We couldn't find a hospital registered at {slug}. Double-check the address or contact your hospital administrator.",
 
     'booking.title': 'Book an appointment',
+    'booking.subtitle': '{hospital} — takes under a minute.',
+    'booking.callUs': 'Or call us at',
     'booking.yourName': 'Your name',
     'booking.phoneNumber': 'Phone number',
     'booking.emailOptional': 'Email (optional)',
@@ -119,6 +121,8 @@ export const translations = {
       'हमें {slug} पर पंजीकृत कोई अस्पताल नहीं मिला। पता जांचें या अपने अस्पताल प्रशासक से संपर्क करें।',
 
     'booking.title': 'अपॉइंटमेंट बुक करें',
+    'booking.subtitle': '{hospital} — एक मिनट से भी कम समय में।',
+    'booking.callUs': 'या हमें कॉल करें',
     'booking.yourName': 'आपका नाम',
     'booking.phoneNumber': 'फ़ोन नंबर',
     'booking.emailOptional': 'ईमेल (वैकल्पिक)',
@@ -200,6 +204,8 @@ export const translations = {
       'आम्हाला {slug} येथे नोंदणीकृत रुग्णालय सापडले नाही. पत्ता तपासा किंवा तुमच्या रुग्णालय प्रशासकाशी संपर्क साधा.',
 
     'booking.title': 'अपॉइंटमेंट बुक करा',
+    'booking.subtitle': '{hospital} — एका मिनिटापेक्षा कमी वेळात.',
+    'booking.callUs': 'किंवा आम्हाला कॉल करा',
     'booking.yourName': 'तुमचे नाव',
     'booking.phoneNumber': 'फोन नंबर',
     'booking.emailOptional': 'ईमेल (ऐच्छिक)',

@@ -47,37 +47,37 @@ function HospitalDetailPage() {
 
   return (
     <div className="max-w-4xl">
-      <Link to="/superadmin/hospitals" className="text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/superadmin/hospitals" className="text-sm text-muted hover:text-heading">
         &larr; Back to hospitals
       </Link>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">{hospital.title}</h1>
-          <p className="text-sm text-slate-500">{hospital.slug}</p>
+          <h1 className="text-xl font-semibold text-heading">{hospital.title}</h1>
+          <p className="text-sm text-muted">{hospital.slug}</p>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={hospital.status} />
           <button
             onClick={toggleStatus}
             disabled={togglingStatus}
-            className="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
           >
             Switch to {hospital.status === 'trial' ? 'Ongoing' : 'Trial'}
           </button>
         </div>
       </div>
 
-      <div className="mt-6 border-b border-slate-200">
+      <div className="mt-6 overflow-x-auto border-b border-line">
         <nav className="-mb-px flex gap-6">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`cursor-pointer border-b-2 px-1 pb-3 text-sm font-medium ${
+              className={`cursor-pointer border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab.key
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
+                  ? 'border-indigo-500 text-heading'
+                  : 'border-transparent text-muted hover:text-heading'
               }`}
             >
               {tab.label}
@@ -89,11 +89,15 @@ function HospitalDetailPage() {
       <div className="mt-6">
         {activeTab === 'overview' && (
           <section>
-            <h2 className="text-sm font-semibold text-slate-900">Activity</h2>
+            <h2 className="text-sm font-semibold text-heading">Activity</h2>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <StatCard label="Appointments today" value={0} hint="No appointment data yet" />
-              <StatCard label="Total appointments" value={0} hint="No appointment data yet" />
-              <StatCard label="Active staff" value={staff.filter((s) => s.status === 'active').length} />
+              <StatCard label="Appointments today" value={0} hint="No appointment data yet" icon="appointments" />
+              <StatCard label="Total appointments" value={0} hint="No appointment data yet" icon="appointments" />
+              <StatCard
+                label="Active staff"
+                value={staff.filter((s) => s.status === 'active').length}
+                icon="staff"
+              />
             </div>
           </section>
         )}
@@ -106,7 +110,7 @@ function HospitalDetailPage() {
 
         {activeTab === 'content' && (
           <section className="space-y-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               Controls what shows on {hospital.title}'s public landing page.
             </p>
             {CONTENT_SECTIONS.map((cfg) => (
@@ -116,6 +120,7 @@ function HospitalDetailPage() {
                 sectionKey={cfg.key}
                 label={cfg.label}
                 fields={cfg.fields}
+                noItems={cfg.noItems}
                 section={hospital.optionals?.[cfg.key] || { enabled: 'off', orderNumber: 1, items: [] }}
               />
             ))}
@@ -125,18 +130,18 @@ function HospitalDetailPage() {
         {activeTab === 'staff' && (
           <section>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Staff</h2>
+              <h2 className="text-sm font-semibold text-heading">Staff</h2>
               <button
                 onClick={() => setShowStaffForm(true)}
-                className="cursor-pointer rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white"
+                className="cursor-pointer rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 + Add Staff
               </button>
             </div>
 
-            <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card">
+              <table className="min-w-full divide-y divide-line text-sm">
+                <thead className="text-left text-xs font-medium uppercase tracking-wide text-faint">
                   <tr>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Email</th>
@@ -145,12 +150,12 @@ function HospitalDetailPage() {
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line">
                   {staff.map((member) => (
-                    <tr key={member.uid} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">{member.displayName}</td>
-                      <td className="px-4 py-3 text-slate-500">{member.email}</td>
-                      <td className="px-4 py-3 text-slate-500">{ROLE_LABELS[member.role] || member.role}</td>
+                    <tr key={member.uid} className="transition-colors hover:bg-card-strong">
+                      <td className="px-4 py-3 font-medium text-heading">{member.displayName}</td>
+                      <td className="px-4 py-3 text-muted">{member.email}</td>
+                      <td className="px-4 py-3 text-muted">{ROLE_LABELS[member.role] || member.role}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={member.status} kind="user" />
                       </td>
@@ -159,7 +164,7 @@ function HospitalDetailPage() {
                           onClick={() =>
                             setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')
                           }
-                          className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900"
+                          className="cursor-pointer text-sm font-medium text-body hover:text-heading"
                         >
                           {member.status === 'active' ? 'Deactivate' : 'Reactivate'}
                         </button>
@@ -168,7 +173,7 @@ function HospitalDetailPage() {
                   ))}
                   {staff.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                      <td colSpan={5} className="px-4 py-8 text-center text-faint">
                         No staff assigned yet.
                       </td>
                     </tr>
