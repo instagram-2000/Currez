@@ -6,17 +6,17 @@ import { DAYS_OF_WEEK, DAY_LABELS, slotsForDaySchedule } from '../../utils/docto
 // hours or slot length immediately shows its effect on booking capacity.
 function ScheduleDayRows({ schedule, onChangeDay, readOnly = false, slotMinutes }) {
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {DAYS_OF_WEEK.map((day) => {
         const daySchedule = schedule[day] || { available: false, start: '09:00', end: '17:00' }
         const slotCount = slotsForDaySchedule(daySchedule, slotMinutes).length
         return (
           <div
             key={day}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-card p-3"
+            className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card p-2.5 sm:p-3"
           >
             <label
-              className={`flex w-28 shrink-0 items-center gap-2 text-sm font-medium text-body ${
+              className={`flex w-24 shrink-0 items-center gap-2 text-sm font-medium text-body ${
                 readOnly ? '' : 'cursor-pointer'
               }`}
             >
@@ -36,7 +36,7 @@ function ScheduleDayRows({ schedule, onChangeDay, readOnly = false, slotMinutes 
               onChange={(e) => onChangeDay(day, { start: e.target.value })}
               className="rounded-lg border border-line bg-card px-2 py-1 text-sm text-heading focus:border-line-strong focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             />
-            <span className="text-sm text-faint">to</span>
+            <span className="text-xs text-faint">to</span>
             <input
               type="time"
               disabled={readOnly || !daySchedule.available}
@@ -45,7 +45,7 @@ function ScheduleDayRows({ schedule, onChangeDay, readOnly = false, slotMinutes 
               className="rounded-lg border border-line bg-card px-2 py-1 text-sm text-heading focus:border-line-strong focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
             />
             <span className="ml-auto text-xs text-faint">
-              {daySchedule.available ? `${slotCount} slot${slotCount === 1 ? '' : 's'}/day` : 'Unavailable'}
+              {daySchedule.available ? `${slotCount} slot${slotCount === 1 ? '' : 's'}` : 'Off'}
             </span>
           </div>
         )

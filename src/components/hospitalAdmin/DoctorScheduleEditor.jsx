@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { updateDoctorSchedule } from '../../firebase/users'
 import { DEFAULT_SCHEDULE, SLOT_LENGTH_OPTIONS, getSlotMinutes } from '../../utils/doctorSchedule'
 import ScheduleDayRows from './ScheduleDayRows'
+import NavIcon from '../common/NavIcon'
 
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
 const ALL_DAYS = [...WEEKDAYS, 'saturday', 'sunday']
@@ -39,14 +40,32 @@ function DoctorScheduleEditor({ doctor, readOnly = false, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-line bg-surface p-6 shadow-xl">
-        <h2 className="text-base font-semibold text-heading">{doctor.displayName}'s schedule</h2>
-        <p className="mt-1 text-sm text-muted">
-          {readOnly
-            ? 'Days and hours this doctor is available for appointments.'
-            : 'Toggle the days this doctor is available, and how long each appointment slot is.'}
-        </p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="animate-fade-in-up relative max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-line bg-surface p-6 shadow-xl"
+      >
+        {/* header */}
+        <div className="flex items-start justify-between pr-8">
+          <div>
+            <h2 className="text-base font-semibold text-heading">{doctor.displayName}'s schedule</h2>
+            <p className="mt-1 text-sm text-muted">
+              {readOnly
+                ? 'Days and hours this doctor is available for appointments.'
+                : 'Toggle the days this doctor is available, and how long each appointment slot is.'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute top-4 right-4 cursor-pointer rounded-lg p-1.5 text-muted transition-colors hover:bg-card-strong hover:text-heading"
+          >
+            <NavIcon name="close" className="h-4 w-4" />
+          </button>
+        </div>
 
         {!readOnly && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -90,7 +109,7 @@ function DoctorScheduleEditor({ doctor, readOnly = false, onClose }) {
 
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="sticky bottom-0 -mx-6 -mb-6 mt-6 flex justify-end gap-3 border-t border-line bg-surface px-6 py-4">
           {readOnly ? (
             <button
               onClick={onClose}
