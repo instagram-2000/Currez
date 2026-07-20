@@ -20,6 +20,38 @@
   --color-body: #334155;
   --color-muted: #64748b;
   --color-faint: #94a3b8;
+
+  /* Company landing page only — a "hospital token & ledger" accent system
+     layered on top of the neutrals above. Not used anywhere else in the
+     app, so it doesn't touch the product's own indigo/slate look. */
+  --color-accent: #b7791f; /* brass/marigold — echoes a queue-token stamp */
+  --color-accent-soft: rgba(183, 121, 31, 0.12);
+  --color-accent-glow: #ffb238; /* constant bright amber for the always-dark ink bands */
+  --color-ink: #16213a; /* constant deep navy — text on paper, bg for ledger bands */
+  --color-paper: #faf3e4; /* constant warm parchment — the token chit & pull-quote material */
+  --color-paper-line: #e4d5b3;
+  --color-stamp: #3f7d63; /* stamp-ink green — confirmed/success */
+  --color-stamp-soft: rgba(63, 125, 99, 0.12);
+  --color-rust: #b5482f; /* rust — pending/attention */
+  --color-rust-soft: rgba(181, 72, 47, 0.12);
+
+  --font-display: "Fraunces", "Iowan Old Style", serif;
+  --font-plex: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-plex-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Hospital tenant sites only (scoped via .tenant-site below) — a
+     confident geometric display face for headings, distinct from the
+     Currez marketing site's serif so a tenant site never reads as
+     reused Currez branding. Body copy stays on the default sans; the
+     hospital's own --tenant-primary carries the color identity. */
+  --font-tenant-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.tenant-site h1,
+.tenant-site h2,
+.tenant-site h3 {
+  font-family: var(--font-tenant-display);
+  letter-spacing: -0.01em;
 }
 
 .dark {
@@ -33,6 +65,18 @@
   --color-body: #cbd5e1;
   --color-muted: #94a3b8;
   --color-faint: #64748b;
+
+  /* Brighter in dark mode so the accent still pops off a dark page; the
+     paper/ink/glow tokens above stay constant in both themes on purpose —
+     the token chit and ledger bands are meant to read as physical objects
+     that don't change with the lighting. */
+  --color-accent: #ffb238;
+  --color-accent-soft: rgba(255, 178, 56, 0.14);
+  --color-stamp: #5fae8c;
+  --color-stamp-soft: rgba(95, 174, 140, 0.16);
+  --color-rust: #e2795a;
+  --color-rust-soft: rgba(226, 121, 90, 0.16);
+
   /* Tells the browser to render native form controls (a <select>'s own
      dropdown popup, date pickers, etc.) with a dark palette — without this,
      the popup list ignores our CSS and renders white-on-white (invisible)

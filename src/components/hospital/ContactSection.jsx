@@ -1,6 +1,7 @@
 import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
+import NavIcon from '../common/NavIcon'
 
 function ContactSection({ config }) {
   const { footer, opdHours } = config
@@ -14,25 +15,25 @@ function ContactSection({ config }) {
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.visitOrReachUs')}</h2>
       </Reveal>
 
-      <div className="mt-10 grid gap-10 md:grid-cols-2">
-        <Reveal className="space-y-6">
+      <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <Reveal className="space-y-6 rounded-2xl border border-line bg-card p-7">
           <div className="space-y-3 text-sm text-body">
             {footer?.address && (
-              <p className="flex items-start gap-2">
-                <span>📍</span> {footer.address}
+              <p className="flex items-start gap-2.5">
+                <NavIcon name="pin" className="mt-0.5 h-4 w-4 shrink-0 text-faint" /> {footer.address}
               </p>
             )}
             {footer?.phone && (
-              <p className="flex items-center gap-2">
-                <span>📞</span>{' '}
+              <p className="flex items-center gap-2.5">
+                <NavIcon name="phone" className="h-4 w-4 shrink-0 text-faint" />
                 <a href={`tel:${footer.phone.replace(/\s+/g, '')}`} className="hover:text-heading">
                   {footer.phone}
                 </a>
               </p>
             )}
             {footer?.email && (
-              <p className="flex items-center gap-2">
-                <span>✉️</span>{' '}
+              <p className="flex items-center gap-2.5">
+                <NavIcon name="mail" className="h-4 w-4 shrink-0 text-faint" />
                 <a href={`mailto:${footer.email}`} className="hover:text-heading">
                   {footer.email}
                 </a>
@@ -62,9 +63,10 @@ function ContactSection({ config }) {
 
         <Reveal
           delay={120}
-          className="flex min-h-[220px] items-center justify-center rounded-xl border border-line bg-card text-center text-sm text-muted"
+          className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-card text-center text-sm text-muted"
         >
-          <span>🗺️ {t('hospital.mapPlaceholder')}</span>
+          <NavIcon name="map" className="h-6 w-6 text-faint" />
+          <span>{t('hospital.mapPlaceholder')}</span>
         </Reveal>
       </div>
     </section>

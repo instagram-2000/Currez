@@ -42,7 +42,9 @@ function HospitalLandingPage({ slug }) {
   // rather than trying to invert an arbitrary admin-picked color.
   return (
     <div
-      className={theme === 'dark' ? 'min-h-screen text-white' : 'min-h-screen bg-page text-heading'}
+      className={
+        theme === 'dark' ? 'tenant-site min-h-screen text-white' : 'tenant-site min-h-screen bg-page text-heading'
+      }
       style={{
         '--tenant-primary': config.branding?.primaryColor || '#6366f1',
         '--tenant-secondary': config.branding?.secondColor || '#0f172a',

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Reveal from "../components/common/Reveal";
 import ThemeToggle from "../components/common/ThemeToggle";
-import NavIcon from "../components/common/NavIcon";
+import TokenChit from "../components/company/TokenChit";
 import LeadCaptureModal from "../components/company/LeadCaptureModal";
 
 const LEAD_MODALS = {
@@ -116,21 +116,23 @@ function CompanyLandingPage() {
   const [activeModal, setActiveModal] = useState(null);
 
   return (
-    <div className="min-h-screen bg-page text-heading">
+    <div className="min-h-screen bg-page font-plex text-heading">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-line bg-page/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-line bg-page/85 backdrop-blur">
         <div className={`flex items-center justify-between py-4 ${CONTAINER}`}>
-          <span className="flex items-center gap-2">
-            <img src="/currez-mark.png" alt="Currez" className="h-8 w-8 rounded-lg object-contain" />
-            <span className="text-lg font-semibold">Currez</span>
+          <span className="flex items-center gap-2.5">
+            <img src="/currez-mark.png" alt="Currez" className="h-8 w-8 rounded-md object-contain" />
+            <span className="font-plex-mono text-base font-semibold tracking-[0.08em] text-heading">
+              CURREZ
+            </span>
           </span>
 
-          <nav className="hidden items-center gap-8 text-sm text-body md:flex">
+          <nav className="hidden items-center gap-8 text-xs md:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="transition-colors hover:text-heading"
+                className="font-medium uppercase tracking-wide text-body transition-colors hover:text-heading"
               >
                 {link.label}
               </a>
@@ -141,7 +143,7 @@ function CompanyLandingPage() {
             <ThemeToggle />
             <button
               onClick={() => setActiveModal("demo")}
-              className="hidden cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 sm:inline-block"
+              className="hidden cursor-pointer rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition-transform duration-200 hover:-translate-y-0.5 sm:inline-block"
             >
               Book a demo
             </button>
@@ -190,7 +192,7 @@ function CompanyLandingPage() {
               ))}
               <button
                 onClick={() => { setMenuOpen(false); setActiveModal("demo"); }}
-                className="cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-center font-medium text-white"
+                className="cursor-pointer rounded-lg bg-accent px-4 py-2 text-center font-semibold text-ink"
               >
                 Book a demo
               </button>
@@ -200,50 +202,62 @@ function CompanyLandingPage() {
       </header>
 
       {/* Hero */}
-      <section className={`pb-16 pt-16 md:pb-24 md:pt-24 ${CONTAINER}`}>
-        <h1 className="max-w-2xl animate-fade-in-up text-4xl font-bold leading-tight md:text-5xl">
-          Every hospital appointment,
-          <br />
-          handled in one place.
-        </h1>
-        <p
-          className="mt-5 max-w-xl animate-fade-in-up text-base text-body md:text-lg"
-          style={{ animationDelay: "120ms" }}
-        >
-          Currez gives each hospital its own branded booking site, patient
-          self-service booking, and role-based dashboards for admins, doctors
-          and receptionists — live in minutes.
-        </p>
-        <div
-          className="mt-8 flex animate-fade-in-up flex-wrap items-center gap-4"
-          style={{ animationDelay: "240ms" }}
-        >
-          <button
-            onClick={() => setActiveModal("onboard")}
-            className="cursor-pointer rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+      <section className={`grid gap-14 pb-20 pt-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:pb-28 md:pt-24 ${CONTAINER}`}>
+        <div>
+          <p className="animate-fade-in-up font-plex-mono text-xs uppercase tracking-[0.25em] text-accent">
+            Hospital operations, digitized
+          </p>
+          <h1
+            className="mt-4 max-w-xl animate-fade-in-up font-display text-4xl font-semibold leading-[1.05] md:text-6xl"
+            style={{ animationDelay: "90ms" }}
           >
-            Get Your Hospital Onboarded
-          </button>
-          <a
-            href="#features"
-            className="text-sm font-medium text-body transition-colors hover:text-heading"
+            Every hospital appointment,
+            <br />
+            handled <span className="italic text-accent">in one place</span>.
+          </h1>
+          <p
+            className="mt-6 max-w-md animate-fade-in-up text-base text-body md:text-lg"
+            style={{ animationDelay: "180ms" }}
           >
-            See features &rarr;
-          </a>
+            Currez gives each hospital its own branded booking site, patient
+            self-service booking, and role-based dashboards for admins, doctors
+            and receptionists — live in minutes.
+          </p>
+          <div
+            className="mt-8 flex animate-fade-in-up flex-wrap items-center gap-6"
+            style={{ animationDelay: "280ms" }}
+          >
+            <button
+              onClick={() => setActiveModal("onboard")}
+              className="cursor-pointer rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-ink transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/20"
+            >
+              Get Your Hospital Onboarded
+            </button>
+            <a
+              href="#features"
+              className="text-sm font-medium text-body transition-colors hover:text-heading"
+            >
+              See features &rarr;
+            </a>
+          </div>
         </div>
+
+        <Reveal delay={200}>
+          <TokenChit />
+        </Reveal>
       </section>
 
-      {/* Stats band */}
-      <Reveal as="section" className="bg-indigo-600 py-10">
+      {/* Stats / ledger band */}
+      <Reveal as="section" className="bg-ink py-12">
         <div
-          className={`grid grid-cols-2 gap-8 text-center sm:grid-cols-4 ${CONTAINER}`}
+          className={`grid grid-cols-2 divide-y divide-white/10 sm:grid-cols-4 sm:divide-x sm:divide-y-0 ${CONTAINER}`}
         >
           {STATS.map((stat) => (
-            <div key={stat.label}>
-              <p className="text-2xl font-bold text-white md:text-3xl">
+            <div key={stat.label} className="px-2 py-5 text-center sm:py-0">
+              <p className="font-plex-mono text-2xl font-semibold text-accent-glow md:text-3xl">
                 {stat.value}
               </p>
-              <p className="mt-1 text-xs text-indigo-100 md:text-sm">
+              <p className="mt-1.5 text-[11px] uppercase tracking-wide text-white/60 md:text-xs">
                 {stat.label}
               </p>
             </div>
@@ -252,25 +266,32 @@ function CompanyLandingPage() {
       </Reveal>
 
       {/* How it works */}
-      <section id="features" className={`py-20 ${CONTAINER}`}>
+      <section id="features" className={`py-24 ${CONTAINER}`}>
         <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+          <p className="font-plex-mono text-xs uppercase tracking-[0.25em] text-accent">
             How Currez works
           </p>
+          <h2 className="mt-3 font-display text-3xl font-semibold md:text-4xl">
+            Booking to confirmation, in four steps.
+          </h2>
         </Reveal>
-        <div className="mt-8 divide-y divide-line border-t border-line">
+        <div className="mt-10 divide-y divide-line border-t border-line">
           {HOW_IT_WORKS.map((step, i) => (
             <Reveal
               key={step.n}
               delay={i * 80}
-              className="grid grid-cols-[3rem_1fr] gap-4 py-6 sm:grid-cols-[5rem_1fr] sm:gap-6"
+              className="grid grid-cols-[3.5rem_1fr] items-start gap-4 py-7 sm:grid-cols-[5rem_1fr] sm:gap-6"
             >
-              <span className="font-mono text-sm text-indigo-500">
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-md border border-paper-line bg-paper font-plex-mono text-xs font-semibold text-ink ${
+                  i % 2 === 0 ? "-rotate-2" : "rotate-2"
+                }`}
+              >
                 {step.n}
               </span>
               <div>
                 <h3 className="font-semibold text-heading">{step.title}</h3>
-                <p className="mt-1 max-w-xl text-sm text-body">{step.body}</p>
+                <p className="mt-1.5 max-w-xl text-sm text-body">{step.body}</p>
               </div>
             </Reveal>
           ))}
@@ -278,13 +299,13 @@ function CompanyLandingPage() {
       </section>
 
       {/* Command center / dashboard preview */}
-      <section id="dashboard" className={`py-20 ${CONTAINER}`}>
+      <section id="dashboard" className={`py-24 ${CONTAINER}`}>
         <div className="grid items-center gap-12 md:grid-cols-2">
           <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+            <p className="font-plex-mono text-xs uppercase tracking-[0.25em] text-accent">
               Command center
             </p>
-            <h2 className="mt-3 text-3xl font-bold">
+            <h2 className="mt-3 font-display text-3xl font-semibold">
               Every department, one dashboard.
             </h2>
             <p className="mt-4 max-w-md text-body">
@@ -309,8 +330,8 @@ function CompanyLandingPage() {
                   key={tile.label}
                   className="rounded-xl border border-line bg-page p-3 transition-colors hover:border-line-strong"
                 >
-                  <p className="text-lg font-bold text-heading">{tile.value}</p>
-                  <p className="mt-1 text-[11px] text-faint">{tile.label}</p>
+                  <p className="font-plex-mono text-lg font-bold text-heading">{tile.value}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-wide text-faint">{tile.label}</p>
                 </div>
               ))}
             </div>
@@ -338,13 +359,13 @@ function CompanyLandingPage() {
                 >
                   <div>
                     <p className="text-heading">{row.name}</p>
-                    <p className="text-xs text-faint">{row.meta}</p>
+                    <p className="font-plex-mono text-xs text-faint">{row.meta}</p>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    className={`rounded-sm px-2 py-0.5 font-plex-mono text-[10px] font-semibold uppercase tracking-wide ${
                       row.status === "Confirmed"
-                        ? "bg-emerald-500/10 text-emerald-500"
-                        : "bg-amber-500/10 text-amber-500"
+                        ? "bg-stamp-soft text-stamp"
+                        : "bg-rust-soft text-rust"
                     }`}
                   >
                     {row.status}
@@ -357,12 +378,12 @@ function CompanyLandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className={`py-20 ${CONTAINER}`}>
+      <section id="pricing" className={`py-24 ${CONTAINER}`}>
         <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+          <p className="font-plex-mono text-xs uppercase tracking-[0.25em] text-accent">
             Pricing
           </p>
-          <h2 className="mt-3 text-3xl font-bold">
+          <h2 className="mt-3 font-display text-3xl font-semibold md:text-4xl">
             Simple, hospital-sized plans
           </h2>
         </Reveal>
@@ -375,51 +396,55 @@ function CompanyLandingPage() {
               className={`relative rounded-2xl border p-6 transition-all duration-200 ${
                 tier.comingSoon
                   ? "border-line opacity-70"
-                  : "border-indigo-500 bg-card hover:-translate-y-1"
+                  : "border-accent/40 bg-paper text-ink hover:-translate-y-1"
               }`}
             >
               {tier.comingSoon ? (
-                <span className="absolute -top-3 right-6 rounded-full bg-card-strong px-3 py-1 text-[11px] font-semibold text-muted ring-1 ring-line">
+                <span className="absolute -top-3 right-6 -rotate-3 rounded-sm bg-card-strong px-2.5 py-1 font-plex-mono text-[10px] font-semibold uppercase tracking-wide text-muted ring-1 ring-line">
                   Coming soon
                 </span>
               ) : (
-                <span className="absolute -top-3 right-6 rounded-full bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white">
+                <span className="absolute -top-3 right-6 -rotate-3 rounded-sm bg-stamp px-2.5 py-1 font-plex-mono text-[10px] font-semibold uppercase tracking-wide text-white">
                   Available now
                 </span>
               )}
-              <p className="text-xs font-semibold uppercase tracking-wide text-faint">
+              <p
+                className={`font-plex-mono text-xs font-semibold uppercase tracking-wide ${
+                  tier.comingSoon ? "text-faint" : "text-ink/60"
+                }`}
+              >
                 {tier.name}
               </p>
               {/* Pricing & feature list aren't finalized for this tier yet —
                   blurred rather than shown as real numbers, so nobody reads
                   ₹15k/₹42k as a committed price. */}
               <div className={tier.comingSoon ? "pointer-events-none select-none blur-sm" : undefined}>
-                <p className="mt-2 text-3xl font-bold">
+                <p className="mt-2 font-display text-3xl font-semibold">
                   {tier.price || "Custom"}
                   {tier.period && (
-                    <span className="text-base font-normal text-faint">
+                    <span className={`font-plex text-base font-normal ${tier.comingSoon ? "text-faint" : "text-ink/50"}`}>
                       {tier.period}
                     </span>
                   )}
                 </p>
-                <p className="mt-2 text-sm text-body">{tier.tagline}</p>
-                <ul className="mt-5 space-y-2 text-sm text-body">
+                <p className={`mt-2 text-sm ${tier.comingSoon ? "text-body" : "text-ink/70"}`}>{tier.tagline}</p>
+                <ul className={`mt-5 space-y-2 text-sm ${tier.comingSoon ? "text-body" : "text-ink/80"}`}>
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-indigo-500">&#10003;</span>
+                      <span className={`mt-0.5 ${tier.comingSoon ? "text-faint" : "text-accent"}`}>&#10003;</span>
                       {f}
                     </li>
                   ))}
                 </ul>
               </div>
               {tier.comingSoon ? (
-                <span className="mt-6 block cursor-not-allowed rounded-full border border-line-strong px-4 py-2 text-center text-sm font-medium text-faint">
+                <span className="mt-6 block cursor-not-allowed rounded-lg border border-line-strong px-4 py-2 text-center text-sm font-medium text-faint">
                   Coming soon
                 </span>
               ) : (
                 <button
                   onClick={() => setActiveModal("sales")}
-                  className="mt-6 block w-full cursor-pointer rounded-full bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                  className="mt-6 block w-full cursor-pointer rounded-lg bg-accent px-4 py-2 text-center text-sm font-semibold text-ink transition-all duration-200 hover:-translate-y-0.5"
                 >
                   {tier.cta}
                 </button>
@@ -430,15 +455,20 @@ function CompanyLandingPage() {
       </section>
 
       {/* Testimonial */}
-      <Reveal as="section" className="border-t border-line py-20 text-center">
-        <div className={CONTAINER}>
-          <p className="mx-auto max-w-2xl text-xl font-medium text-heading md:text-2xl">
-            "Patients book themselves and reception just confirms and goes — our
-            front desk workload dropped almost overnight."
-          </p>
-          <p className="mt-4 text-sm text-faint">
-            — Hospital Operations Team, Currez partner hospital
-          </p>
+      <Reveal as="section" className="border-t border-line py-24">
+        <div className={`${CONTAINER} flex justify-center`}>
+          <div className="relative max-w-2xl -rotate-1 rounded-2xl border border-paper-line bg-paper px-8 py-10 text-center text-ink shadow-xl shadow-black/10 sm:px-12">
+            <span className="absolute -top-7 left-8 font-display text-7xl text-accent/60" aria-hidden="true">
+              &ldquo;
+            </span>
+            <p className="font-display text-xl font-medium leading-snug md:text-2xl">
+              Patients book themselves and reception just confirms and goes —
+              our front desk workload dropped almost overnight.
+            </p>
+            <p className="mt-5 font-plex-mono text-xs uppercase tracking-wide text-ink/50">
+              — Hospital Operations Team, Currez partner hospital
+            </p>
+          </div>
         </div>
       </Reveal>
 
@@ -446,19 +476,19 @@ function CompanyLandingPage() {
       <Reveal
         as="section"
         id="contact"
-        className="border-t border-line bg-card py-20 text-center"
+        className="bg-ink py-24 text-center text-white"
       >
         <div className={CONTAINER}>
-          <h2 className="text-3xl font-bold">
+          <h2 className="font-display text-3xl font-semibold md:text-4xl">
             Ready to move your hospital onto Currez?
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-body">
+          <p className="mx-auto mt-3 max-w-md text-white/70">
             Reach out and we'll get your hospital's branded booking site live in
             minutes.
           </p>
           <button
             onClick={() => setActiveModal("onboard")}
-            className="mt-8 inline-block cursor-pointer rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+            className="mt-8 inline-block cursor-pointer rounded-lg bg-accent-glow px-6 py-3 text-sm font-semibold text-ink transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent-glow/30"
           >
             Get Your Hospital Onboarded
           </button>
@@ -468,9 +498,12 @@ function CompanyLandingPage() {
       {/* Contact us — persistent, reachable from anywhere on the page */}
       <button
         onClick={() => setActiveModal("contact")}
-        className="fixed bottom-6 right-6 z-40 flex cursor-pointer items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-500"
+        className="fixed bottom-6 right-6 z-40 flex cursor-pointer items-center gap-2.5 rounded-lg bg-ink px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5"
       >
-        <NavIcon name="chat" className="h-4 w-4" />
+        <span className="relative flex h-2 w-2" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-glow opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-glow" />
+        </span>
         Contact Us
       </button>
 
@@ -485,12 +518,12 @@ function CompanyLandingPage() {
 
       {/* Footer */}
       <footer
-        className={`flex flex-col items-center justify-between gap-4 py-8 text-xs text-faint sm:flex-row ${CONTAINER}`}
+        className={`flex flex-col items-center justify-between gap-4 border-t border-line py-8 font-plex-mono text-[11px] text-faint sm:flex-row ${CONTAINER}`}
       >
         <p>
           © {new Date().getFullYear()} Currez Technologies. All rights reserved.
         </p>
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="flex flex-wrap justify-center gap-6 uppercase tracking-wide">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}

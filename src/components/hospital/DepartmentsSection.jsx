@@ -1,8 +1,10 @@
 import { useLanguage } from '../../contexts/LanguageContext'
-import { initials } from '../../utils/initials'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 
+// Deliberately not another card grid — Services and Doctors already use
+// that shape, so Departments reads as an indexed list instead. Same page,
+// more visual rhythm as you scroll.
 function DepartmentsSection({ data }) {
   const items = data?.items ?? []
   const { t } = useLanguage()
@@ -14,28 +16,22 @@ function DepartmentsSection({ data }) {
         <SectionEyebrow>{t('hospital.navDepartments')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.departments')}</h2>
       </Reveal>
-      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto mt-10 max-w-4xl divide-y divide-line border-t border-b border-line">
         {items.map((item, i) => (
           <Reveal
             key={item.name}
             delay={i * 60}
-            className="group relative overflow-hidden rounded-2xl border border-line bg-card p-7 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-line-strong hover:shadow-lg"
+            className="group grid grid-cols-[2.5rem_1fr] items-start gap-4 py-6 sm:grid-cols-[3.5rem_1fr] sm:gap-6"
           >
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
-              style={{ backgroundColor: 'var(--tenant-primary)' }}
-            />
-            <span
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-base font-bold"
-              style={{
-                background: 'color-mix(in srgb, var(--tenant-primary) 15%, transparent)',
-                color: 'var(--tenant-primary)',
-              }}
-            >
-              {initials(item.name)}
+            <span className="font-mono text-2xl font-bold text-line-strong transition-colors duration-300 group-hover:text-[var(--tenant-primary)] sm:text-3xl">
+              {String(i + 1).padStart(2, '0')}
             </span>
-            <h3 className="mt-4 font-semibold text-heading">{item.name}</h3>
-            <p className="mt-2 text-sm text-body">{item.description}</p>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+              <h3 className="text-lg font-semibold text-heading transition-transform duration-300 group-hover:translate-x-1">
+                {item.name}
+              </h3>
+              <p className="max-w-md text-sm text-body">{item.description}</p>
+            </div>
           </Reveal>
         ))}
       </div>

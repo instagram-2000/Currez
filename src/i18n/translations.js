@@ -79,6 +79,7 @@ export const translations = {
       "Show this token at reception on {date} to confirm your visit and pay the visit fee (cash or online at the hospital). A doctor will be assigned for you.",
     "booking.saveTokenHint":
       "Save this token or your phone number — either one lets you check your appointment status.",
+    "booking.yourToken": "Your token",
     "booking.checkStatusLink": "Check appointment status →",
     "booking.scheduleAvailable":
       "{doctor} is usually available {day}s {start}–{end}.",
@@ -195,6 +196,7 @@ export const translations = {
       "अपनी विजिट की पुष्टि करने और विजिट शुल्क (नकद या ऑनलाइन) चुकाने के लिए {date} को रिसेप्शन पर यह टोकन दिखाएं। आपके लिए एक डॉक्टर तय किया जाएगा।",
     "booking.saveTokenHint":
       "यह टोकन या अपना फ़ोन नंबर सहेजें — अपॉइंटमेंट की स्थिति जांचने के लिए इनमें से कोई भी एक काफी है।",
+    "booking.yourToken": "आपका टोकन",
     "booking.checkStatusLink": "अपॉइंटमेंट की स्थिति जांचें →",
     "booking.scheduleAvailable":
       "{doctor} आमतौर पर {day} को {start}–{end} उपलब्ध रहते हैं।",
@@ -312,6 +314,7 @@ export const translations = {
       "{date} रोजी रिसेप्शनवर हा टोकन दाखवा आणि भेटीची पुष्टी करा व भेट शुल्क (रोख किंवा ऑनलाइन) भरा. तुमच्यासाठी डॉक्टर नेमले जातील.",
     "booking.saveTokenHint":
       "हा टोकन किंवा तुमचा फोन नंबर जपून ठेवा — अपॉइंटमेंटची स्थिती तपासण्यासाठी यापैकी कोणतेही एक पुरेसे आहे.",
+    "booking.yourToken": "तुमचा टोकन",
     "booking.checkStatusLink": "अपॉइंटमेंटची स्थिती तपासा →",
     "booking.scheduleAvailable":
       "{doctor} सहसा {day} रोजी {start}–{end} या वेळेत उपलब्ध असतात.",

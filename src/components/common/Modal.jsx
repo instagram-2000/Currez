@@ -20,7 +20,7 @@ function Modal({ children, onClose, className = 'max-w-md' }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`animate-fade-in-up relative w-full rounded-2xl border border-line bg-surface p-8 shadow-xl ${className}`}
+        className={`animate-fade-in-up relative max-h-[85vh] w-full overflow-y-auto rounded-2xl border border-line bg-surface p-5 shadow-xl sm:p-8 ${className}`}
       >
         <button
           onClick={onClose}

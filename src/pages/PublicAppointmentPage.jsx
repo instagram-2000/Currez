@@ -7,8 +7,8 @@ import BookAppointmentForm from '../components/hospital/BookAppointmentForm'
 // its own full-page card instead of a dialog over the page.
 function PublicAppointmentPage({ slug }) {
   return (
-    <div className="min-h-screen bg-page px-6 py-10 text-heading">
-      <div className="mx-auto w-full max-w-sm rounded-2xl border border-line bg-card p-6">
+    <div className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-heading">
+      <div className="mx-auto w-full max-w-sm rounded-2xl border border-line bg-surface p-8 shadow-xl">
         <div className="flex justify-end">
           <div className="flex items-center gap-1">
             <ThemeToggle />

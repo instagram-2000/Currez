@@ -3,6 +3,7 @@ import { createPatient } from '../../firebase/patients'
 import { createAppointment } from '../../firebase/appointments'
 import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
+import AppointmentTokenCard from './AppointmentTokenCard'
 import Reveal from '../common/Reveal'
 
 const inputClass =
@@ -63,16 +64,18 @@ function BookAppointmentSection({ config }) {
         <p className="mt-2 max-w-md text-sm text-body">{t('booking.sectionSubtitle')}</p>
       </Reveal>
 
-      <Reveal delay={100} className="mt-8 max-w-2xl">
+      <Reveal
+        delay={100}
+        className="mt-8 max-w-2xl rounded-2xl border p-6 sm:p-8"
+        style={{
+          borderColor: 'color-mix(in srgb, var(--tenant-primary) 25%, var(--color-line))',
+          background: 'linear-gradient(180deg, color-mix(in srgb, var(--tenant-primary) 6%, transparent), transparent 60%)',
+        }}
+      >
         {submitted ? (
-          <div className="rounded-xl border border-line bg-card p-6">
+          <div className="text-center">
             <p className="text-heading">{t('booking.sectionReceived')}</p>
-            <p
-              className="mt-3 inline-block rounded-lg bg-card-strong px-4 py-2 font-mono text-lg font-bold tracking-widest"
-              style={{ color: 'var(--tenant-primary)' }}
-            >
-              {submitted.token}
-            </p>
+            <AppointmentTokenCard token={submitted.token} hospitalName={config.title} />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-3">

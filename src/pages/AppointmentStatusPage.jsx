@@ -7,7 +7,7 @@ import CheckStatusForm from '../components/hospital/CheckStatusForm'
 function AppointmentStatusPage({ slug }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-page px-6 py-10 text-heading">
-      <div className="w-full max-w-sm rounded-2xl border border-line bg-card p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8 shadow-xl">
         <div className="flex justify-end">
           <div className="flex items-center gap-1">
             <ThemeToggle />

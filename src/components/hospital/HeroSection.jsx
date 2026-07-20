@@ -1,10 +1,24 @@
 import { useLanguage } from '../../contexts/LanguageContext'
+import NavIcon from '../common/NavIcon'
 
 function HeroSection({ config, onBookClick, onStatusClick }) {
-  const { title, branding, hero, emergency, footer } = config
+  const { title, branding, hero, emergency, footer, yearsServing } = config
   const bgImage = branding?.logos?.bgImage
   const { t } = useLanguage()
   const callPhone = emergency?.enabled && emergency?.phone ? emergency.phone : footer?.phone
+
+  // A quick, real trust signal above the headline — built from data the
+  // hospital already entered (testimonial ratings, years serving) rather
+  // than invented copy. Silently omitted piece-by-piece when missing.
+  const testimonialItems = config.optionals?.testimonials?.items ?? []
+  const avgRating =
+    testimonialItems.length > 0
+      ? (testimonialItems.reduce((sum, item) => sum + (item.rating ?? 5), 0) / testimonialItems.length).toFixed(1)
+      : null
+  const trustParts = [
+    avgRating && `★ ${avgRating} rated by patients`,
+    yearsServing && `${yearsServing}+ years of care`,
+  ].filter(Boolean)
 
   return (
     <section
@@ -32,38 +46,51 @@ function HeroSection({ config, onBookClick, onStatusClick }) {
       />
 
       <div className="relative max-w-2xl text-white">
-        <h1 className="animate-fade-in-up text-4xl font-bold leading-tight md:text-5xl">
+        {trustParts.length > 0 && (
+          <p className="animate-fade-in-up inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur">
+            {trustParts.map((part) => (
+              <span key={part}>{part}</span>
+            ))}
+          </p>
+        )}
+        <h1
+          className="animate-fade-in-up text-4xl leading-[1.05] font-extrabold md:text-6xl"
+          style={{ animationDelay: trustParts.length > 0 ? '80ms' : '0ms', marginTop: trustParts.length > 0 ? '1rem' : 0 }}
+        >
           {hero?.headline || `${t('hospital.welcomeTo')} ${title}`}
         </h1>
         <p
-          className="mt-5 animate-fade-in-up text-base text-slate-300 md:text-lg"
-          style={{ animationDelay: '120ms' }}
+          className="mt-5 animate-fade-in-up max-w-lg text-base text-slate-300 md:text-lg"
+          style={{ animationDelay: '160ms' }}
         >
           {hero?.subtitle || t('hospital.heroSubtitle')}
         </p>
         <div
           className="mt-8 flex animate-fade-in-up flex-wrap items-center gap-3 sm:gap-4"
-          style={{ animationDelay: '240ms' }}
+          style={{ animationDelay: '280ms' }}
         >
           <button
             onClick={onBookClick}
             className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5"
             style={{ backgroundColor: 'var(--tenant-primary)' }}
           >
-            📅 {t('hospital.bookAppointment')}
+            <NavIcon name="appointments" className="h-4 w-4" />
+            {t('hospital.bookAppointment')}
           </button>
           <button
             onClick={onStatusClick}
             className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/25 px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50"
           >
-            🔎 {t('hospital.checkAppointmentStatus')}
+            <NavIcon name="clipboard" className="h-4 w-4" />
+            {t('hospital.checkAppointmentStatus')}
           </button>
           {callPhone && (
             <a
               href={`tel:${callPhone.replace(/\s+/g, '')}`}
               className="inline-flex items-center gap-2 text-sm font-medium text-slate-200 transition-colors hover:text-white"
             >
-              📞 Call Now
+              <NavIcon name="phone" className="h-3.5 w-3.5" />
+              Call Now
             </a>
           )}
         </div>

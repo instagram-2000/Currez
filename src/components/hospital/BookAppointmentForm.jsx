@@ -10,6 +10,7 @@ import { useFormValidation } from '../../hooks/useFormValidation'
 import { useLanguage } from '../../contexts/LanguageContext'
 import NavIcon from '../common/NavIcon'
 import TimeSlotPicker from '../common/TimeSlotPicker'
+import AppointmentTokenCard from './AppointmentTokenCard'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-base text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -111,7 +112,10 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   if (result) {
     return (
       <div className="text-center">
-        <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-300">
+        <span
+          className="mx-auto flex h-11 w-11 items-center justify-center rounded-full"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #6366f1) 18%, transparent)', color: 'var(--tenant-primary, #6366f1)' }}
+        >
           <NavIcon name="appointments" className="h-5 w-5" />
         </span>
         <h1 className="mt-4 text-xl font-bold text-heading">{t('booking.requestedTitle')}</h1>
@@ -120,12 +124,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
             ? t('booking.requestedBodyWithDoctor', { date: result.date, doctor: result.doctorName })
             : t('booking.requestedBodyNoDoctor', { date: result.date })}
         </p>
-        <p
-          className="mt-6 rounded-lg bg-card-strong py-4 font-mono text-2xl font-bold tracking-widest"
-          style={{ color: 'var(--tenant-primary, #6366f1)' }}
-        >
-          {result.token}
-        </p>
+        <AppointmentTokenCard token={result.token} hospitalName={hospital.title} doctorName={result.doctorName} date={result.date} />
         <p className="mt-4 text-xs text-faint">{t('booking.saveTokenHint')}</p>
         {onCheckStatus ? (
           <button
@@ -152,7 +151,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
     <div>
       <span
         className="flex h-11 w-11 items-center justify-center rounded-full"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary) 18%, transparent)', color: 'var(--tenant-primary)' }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #6366f1) 18%, transparent)', color: 'var(--tenant-primary, #6366f1)' }}
       >
         <NavIcon name="appointments" className="h-5 w-5" />
       </span>
@@ -232,6 +231,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
               allowAny
               anyLabel={t('booking.anyTime')}
               emptyHint={t('booking.scheduleUnavailable', { doctor: selectedDoctor.displayName, day: t(`day.${weekday}`) })}
+              accentColor="var(--tenant-primary, #6366f1)"
             />
           </div>
         ) : (
@@ -244,7 +244,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
           type="submit"
           disabled={submitting}
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-6 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ borderColor: 'var(--tenant-primary)', color: 'var(--tenant-primary)' }}
+          style={{ borderColor: 'var(--tenant-primary, #6366f1)', color: 'var(--tenant-primary, #6366f1)' }}
         >
           <NavIcon name="appointments" className="h-4 w-4" />
           {submitting ? t('booking.submitting') : t('booking.submit')}
@@ -257,7 +257,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
             <a
               href={`tel:${callPhone.replace(/\s+/g, '')}`}
               className="font-medium underline"
-              style={{ color: 'var(--tenant-primary)' }}
+              style={{ color: 'var(--tenant-primary, #6366f1)' }}
             >
               {callPhone}
             </a>
