@@ -43,8 +43,11 @@ function phoneDailyCountId(hospitalId, phone, date) {
   return `${hospitalId}::${normalizePhone(phone)}::${date}`
 }
 
-export function subscribeAppointments(hospitalId, callback) {
-  const q = query(collection(db, APPOINTMENTS_COLLECTION), where('hospitalId', '==', hospitalId))
+export function subscribeAppointments(hospitalId, callback, startDate, endDate) {
+  const constraints = [where('hospitalId', '==', hospitalId)]
+  if (startDate) constraints.push(where('date', '>=', startDate))
+  if (endDate) constraints.push(where('date', '<=', endDate))
+  const q = query(collection(db, APPOINTMENTS_COLLECTION), ...constraints)
   return onSnapshot(q, (snapshot) => {
     const appointments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
     appointments.sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))

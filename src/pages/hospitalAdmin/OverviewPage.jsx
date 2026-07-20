@@ -27,13 +27,13 @@ function HospitalOverview({ tenantSlug }) {
   const [staff, setStaff] = useState([])
 
   useEffect(() => subscribeHospital(tenantSlug, setHospital), [tenantSlug])
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments), [tenantSlug])
+  const today = todayString()
+  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, today, today), [tenantSlug, today])
   useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
 
   if (hospital === undefined) return <Spinner />
 
-  const today = todayString()
   const todaysAppointments = appointments.filter((a) => a.date === today).length
   const doctorCount = staff.filter((s) => s.role === ROLES.DOCTOR && s.status === 'active').length
 
