@@ -42,8 +42,6 @@ function AppointmentStatusBadge({ status }) {
 
 function AppointmentsPage({ tenantSlug }) {
   const { role, user } = useAuth()
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)
-  const weekLater = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
   const isDoctor = role === ROLES.DOCTOR
   const canBook = role === ROLES.HOSPITAL_ADMIN || role === ROLES.RECEPTIONIST
   const canConfirm = canBook
@@ -62,7 +60,7 @@ function AppointmentsPage({ tenantSlug }) {
   const [viewingAppt, setViewingAppt] = useState(null)
   const [reschedulingAppt, setReschedulingAppt] = useState(null)
 
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, weekAgo, weekLater), [tenantSlug, weekAgo, weekLater])
+  useEffect(() => subscribeAppointments(tenantSlug, setAppointments), [tenantSlug])
   useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
 
