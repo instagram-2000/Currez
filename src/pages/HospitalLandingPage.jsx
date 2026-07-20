@@ -63,7 +63,7 @@ function HospitalLandingPage({ slug }) {
         onStatusClick={() => setActiveModal('status')}
       />
       <StatsBand config={config} doctorCount={doctors.length} />
-      <SectionRenderer optionals={config.optionals} doctors={doctors} />
+      <SectionRenderer optionals={config.optionals} doctors={doctors} slug={slug} />
       <ContactSection config={config} />
       <BookAppointmentSection config={config} />
       <Footer config={config} onStatusClick={() => setActiveModal('status')} />

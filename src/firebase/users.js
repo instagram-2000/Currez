@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getCountFromServer,
+  getDoc,
   onSnapshot,
   query,
   serverTimestamp,
@@ -32,6 +33,20 @@ export function createUserDoc(uid, { email, displayName, role, hospitalId, creat
 
 export function updateDoctorSchedule(uid, schedule) {
   return updateDoc(doc(db, USERS_COLLECTION, uid), { schedule, updatedAt: serverTimestamp() })
+}
+
+export function updateDoctorProfile(uid, profile) {
+  return updateDoc(doc(db, USERS_COLLECTION, uid), { ...profile, updatedAt: serverTimestamp() })
+}
+
+export function getDoctor(uid) {
+  return getDoc(doc(db, USERS_COLLECTION, uid)).then((snap) => (snap.exists() ? { uid: snap.id, ...snap.data() } : null))
+}
+
+export function subscribeDoctor(uid, callback) {
+  return onSnapshot(doc(db, USERS_COLLECTION, uid), (snap) => {
+    callback(snap.exists() ? { uid: snap.id, ...snap.data() } : null)
+  })
 }
 
 export function upsertSuperAdminDoc(uid, { email, displayName }) {

@@ -3,7 +3,7 @@ import BookAppointmentForm from './BookAppointmentForm'
 
 function BookAppointmentModal({ slug, onClose, onCheckStatus }) {
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} className="max-w-xl">
       <BookAppointmentForm slug={slug} onCheckStatus={onCheckStatus} />
     </Modal>
   )

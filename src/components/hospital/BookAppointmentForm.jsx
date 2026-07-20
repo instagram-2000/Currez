@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { subscribeHospital } from '../../firebase/hospitals'
 import { subscribeActiveDoctors } from '../../firebase/users'
 import { createPatient } from '../../firebase/patients'
@@ -24,12 +24,14 @@ const todayString = () => new Date().toISOString().slice(0, 10)
 // modal in place instead of navigating to the standalone status page.
 function BookAppointmentForm({ slug, onCheckStatus }) {
   const { t } = useLanguage()
+  const [searchParams] = useSearchParams()
+  const initialDoctor = searchParams.get('doctor') || ''
   const [hospital, setHospital] = useState(undefined)
   const [doctors, setDoctors] = useState([])
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [doctorId, setDoctorId] = useState('')
+  const [doctorId, setDoctorId] = useState(initialDoctor)
   const [date, setDate] = useState(todayString())
   const [time, setTime] = useState('')
   const [bookedTimes, setBookedTimes] = useState([])
@@ -159,56 +161,60 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
       <p className="mt-1 text-sm text-muted">{t('booking.subtitle', { hospital: hospital.title })}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className={labelClass}>{t('booking.yourName')}</label>
-          <input
-            type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => { setName(e.target.value); clearFieldError('name') }}
-            className={inputClass}
-          />
-          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>{t('booking.yourName')}</label>
+            <input
+              type="text"
+              placeholder="Full name"
+              value={name}
+              onChange={(e) => { setName(e.target.value); clearFieldError('name') }}
+              className={inputClass}
+            />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+          </div>
+
+          <div>
+            <label className={labelClass}>{t('booking.phoneNumber')}</label>
+            <input
+              type="tel"
+              placeholder="+91"
+              value={phone}
+              onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }}
+              className={inputClass}
+            />
+            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+          </div>
         </div>
 
-        <div>
-          <label className={labelClass}>{t('booking.phoneNumber')}</label>
-          <input
-            type="tel"
-            placeholder="+91"
-            value={phone}
-            onChange={(e) => { setPhone(e.target.value); clearFieldError('phone') }}
-            className={inputClass}
-          />
-          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
-        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>{t('booking.doctor')} (optional)</label>
+            <select
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              className={`${inputClass} cursor-pointer`}
+            >
+              <option value="">{t('booking.noPreference')}</option>
+              {doctors.map((d) => (
+                <option key={d.uid} value={d.uid}>
+                  {d.displayName} {d.specialization ? `— ${d.specialization}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label className={labelClass}>{t('booking.doctor')} (optional)</label>
-          <select
-            value={doctorId}
-            onChange={(e) => setDoctorId(e.target.value)}
-            className={`${inputClass} cursor-pointer`}
-          >
-            <option value="">{t('booking.noPreference')}</option>
-            {doctors.map((d) => (
-              <option key={d.uid} value={d.uid}>
-                {d.displayName} {d.specialization ? `— ${d.specialization}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className={labelClass}>{t('booking.preferredDate')}</label>
-          <input
-            type="date"
-            min={todayString()}
-            value={date}
-            onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
-            className={inputClass}
-          />
-          {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+          <div>
+            <label className={labelClass}>{t('booking.preferredDate')}</label>
+            <input
+              type="date"
+              min={todayString()}
+              value={date}
+              onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
+              className={inputClass}
+            />
+            {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+          </div>
         </div>
 
         {selectedDoctor ? (

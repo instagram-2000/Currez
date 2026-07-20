@@ -26,6 +26,8 @@ import PatientsPage from './pages/hospitalAdmin/PatientsPage'
 import StaffPage from './pages/hospitalAdmin/StaffPage'
 import DoctorsPage from './pages/hospitalAdmin/DoctorsPage'
 import MySchedulePage from './pages/hospitalAdmin/MySchedulePage'
+import DoctorProfilePage from './pages/DoctorProfilePage'
+import DoctorProfileEditor from './pages/hospitalAdmin/DoctorProfileEditor'
 import { ROLES } from './utils/roles'
 
 function App() {
@@ -68,6 +70,7 @@ function App() {
         <>
           <Route path="/appointment" element={<PublicAppointmentPage slug={tenantSlug} />} />
           <Route path="/appointment-status" element={<AppointmentStatusPage slug={tenantSlug} />} />
+          <Route path="/doctor/:doctorId" element={<DoctorProfilePage />} />
         </>
       )}
 
@@ -108,9 +111,10 @@ function App() {
                     <Route path="doctors" element={<DoctorsPage tenantSlug={tenantSlug} />} />
                   </Route>
 
-                  {/* Doctor only — self-service schedule */}
+                  {/* Doctor only — self-service schedule and profile */}
                   <Route element={<RequireRole allowedRoles={[ROLES.DOCTOR]} />}>
                     <Route path="schedule" element={<MySchedulePage />} />
+                    <Route path="profile" element={<DoctorProfileEditor />} />
                   </Route>
 
                   {/* Hospital admin + receptionist, and only if the Super

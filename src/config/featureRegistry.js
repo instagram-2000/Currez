@@ -82,6 +82,16 @@ export const FEATURE_REGISTRY = [
     isCore: true,
   },
   {
+    key: 'profile',
+    label: 'My Profile',
+    description: 'Edit your public profile shown to patients.',
+    icon: 'profile',
+    path: 'profile',
+    allowedRoles: [ROLES.DOCTOR],
+    category: FEATURE_CATEGORIES.CORE,
+    isCore: true,
+  },
+  {
     key: 'chatbot',
     label: 'Chatbot',
     description: 'AI assistant that helps patients book appointments, ask hospital questions and navigate services.',
