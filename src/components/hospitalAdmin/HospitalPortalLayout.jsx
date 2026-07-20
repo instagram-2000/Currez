@@ -3,39 +3,29 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { subscribeHospital } from '../../firebase/hospitals'
 import { signOutUser } from '../../firebase/auth'
 import { useAuth } from '../../contexts/AuthContext'
-import { ROLES, ROLE_LABELS } from '../../utils/roles'
+import { useFeatures } from '../../contexts/FeatureContext'
+import { FEATURE_REGISTRY } from '../../config/featureRegistry'
+import { ROLE_LABELS } from '../../utils/roles'
 import StatusBadge from '../superadmin/StatusBadge'
 import NavIcon from '../common/NavIcon'
 import ThemeToggle from '../common/ThemeToggle'
 
-const NAV_ITEMS_BY_ROLE = {
-  [ROLES.HOSPITAL_ADMIN]: [
-    { to: 'overview', label: 'Overview', icon: 'overview' },
-    { to: 'appointments', label: 'Appointments', icon: 'appointments' },
-    { to: 'patients', label: 'Patients', icon: 'patients' },
-    { to: 'staff', label: 'Staff', icon: 'staff' },
-  ],
-  [ROLES.RECEPTIONIST]: [
-    { to: 'overview', label: 'Overview', icon: 'overview' },
-    { to: 'appointments', label: 'Appointments', icon: 'appointments' },
-    { to: 'patients', label: 'Patients', icon: 'patients' },
-    { to: 'doctors', label: 'Doctors', icon: 'doctors' },
-  ],
-  [ROLES.DOCTOR]: [
-    { to: 'overview', label: 'Overview', icon: 'overview' },
-    { to: 'appointments', label: 'My Appointments', icon: 'appointments' },
-    { to: 'schedule', label: 'My Schedule', icon: 'schedule' },
-  ],
-}
-
 function HospitalPortalLayout({ tenantSlug }) {
   const location = useLocation()
   const { user, role } = useAuth()
+  const { isFeatureEnabled } = useFeatures()
   const [hospital, setHospital] = useState(undefined)
 
   useEffect(() => subscribeHospital(tenantSlug, setHospital), [tenantSlug])
 
-  const navItems = NAV_ITEMS_BY_ROLE[role] || []
+  // Single source of truth for sidebar items: a module shows up only if
+  // this role may use it AND this hospital has it enabled (core modules
+  // are always enabled — see FEATURE_REGISTRY/isFeatureEnabled). Adding a
+  // new module never touches this component — register it once and it
+  // appears here automatically.
+  const navItems = FEATURE_REGISTRY.filter(
+    (feature) => feature.allowedRoles.includes(role) && isFeatureEnabled(feature.key)
+  ).map((feature) => ({ to: feature.path, label: feature.label, icon: feature.icon }))
 
   return (
     <div className="min-h-screen bg-page text-heading md:flex">

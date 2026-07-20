@@ -49,6 +49,15 @@ service cloud.firestore {
         currentUserDoc().status == 'active';
     }
 
+    // Reusable guard for any collection that belongs to an optional module
+    // (e.g. a future chatbotThreads/{id} doc). Only meant for non-core
+    // features — core modules (patients, appointments, ...) are always on
+    // and don't need this. See NEW_MODULE_DEVELOPMENT_GUIDE.md.
+    function hospitalHasFeature(hospitalId, featureKey) {
+      return exists(/databases/$(database)/documents/hospitalFeatures/$(hospitalId)) &&
+        get(/databases/$(database)/documents/hospitalFeatures/$(hospitalId)).data.features[featureKey] == true;
+    }
+
     // A doctor may update their own record (schedule, specialization,
     // display name) but never their role, hospital, status or email —
     // those stay hospital-admin/superadmin-only.
@@ -171,6 +180,18 @@ service cloud.firestore {
       allow update: if request.resource.data.count == resource.data.count + 1 &&
                        request.resource.data.count <= 2;
       allow delete: if isSuperAdmin();
+    }
+
+    // Per-hospital module toggles (see src/config/featureRegistry.js and
+    // src/firebase/hospitalFeatures.js). Doc ID == hospitalId. Staff of the
+    // hospital may read their own flags (the client feature-gate depends on
+    // it); only the Super Admin may ever write them — this is the real,
+    // server-side enforced version of "Super Admin decides which hospitals
+    // can use it," independent of anything the client sends.
+    match /hospitalFeatures/{hospitalId} {
+      allow get: if isSuperAdmin() || isHospitalStaffOf(hospitalId);
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     match /{document=**} {

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { subscribeHospital, updateHospital } from '../../firebase/hospitals'
 import { subscribeUsersByHospital, setUserStatus } from '../../firebase/users'
+import { subscribeToHospitalFeatures } from '../../firebase/hospitalFeatures'
 import { resetPassword } from '../../firebase/auth'
 import { ROLE_LABELS } from '../../utils/roles'
 import { CONTENT_SECTIONS } from '../../utils/hospitalContentSchema'
 import HospitalFormPage from './HospitalFormPage'
 import ContentSectionEditor from '../../components/superadmin/ContentSectionEditor'
+import FeatureManagementPanel from '../../components/superadmin/FeatureManagementPanel'
 import StaffFormModal from '../../components/superadmin/StaffFormModal'
 import CredentialsDialog from '../../components/superadmin/CredentialsDialog'
 import StatCard from '../../components/superadmin/StatCard'
@@ -18,6 +20,7 @@ const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'branding', label: 'Branding & Contact' },
   { key: 'content', label: 'Content' },
+  { key: 'features', label: 'Modules' },
   { key: 'staff', label: 'Staff' },
 ]
 
@@ -25,6 +28,7 @@ function HospitalDetailPage() {
   const { slug } = useParams()
   const [hospital, setHospital] = useState(undefined)
   const [staff, setStaff] = useState([])
+  const [features, setFeatures] = useState(undefined)
   const [togglingStatus, setTogglingStatus] = useState(false)
   const [showStaffForm, setShowStaffForm] = useState(false)
   const [newCredentials, setNewCredentials] = useState(null)
@@ -33,7 +37,15 @@ function HospitalDetailPage() {
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
   useEffect(() => subscribeUsersByHospital(slug, setStaff), [slug])
+  // Only reads hospitalFeatures when the Modules tab is actually open —
+  // Overview/Branding/Content/Staff never need it, so this saves a read on
+  // every hospital-detail visit that doesn't touch Modules.
+  useEffect(() => {
+    if (activeTab !== 'features') return
+    return subscribeToHospitalFeatures(slug, setFeatures)
+  }, [slug, activeTab])
   useEffect(() => setActiveTab('overview'), [slug])
+  useEffect(() => setFeatures(undefined), [slug])
 
   if (hospital === undefined) return <Spinner />
   if (hospital === null) return <TenantNotFound slug={slug} />
@@ -137,6 +149,14 @@ function HospitalDetailPage() {
               />
             ))}
           </section>
+        )}
+
+        {activeTab === 'features' && (
+          features === undefined ? (
+            <Spinner />
+          ) : (
+            <FeatureManagementPanel hospitalId={hospital.slug} features={features} />
+          )
         )}
 
         {activeTab === 'staff' && (
