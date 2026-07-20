@@ -13,6 +13,7 @@ import HospitalFormPage from './pages/superadmin/HospitalFormPage'
 import HospitalDetailPage from './pages/superadmin/HospitalDetailPage'
 import PublicAppointmentPage from './pages/PublicAppointmentPage'
 import AppointmentStatusPage from './pages/AppointmentStatusPage'
+import MyAppointmentsPage from './pages/MyAppointmentsPage'
 import RequireHospitalStaff from './components/hospitalAdmin/RequireHospitalStaff'
 import RequireRole from './components/hospitalAdmin/RequireRole'
 import HospitalPortalLayout from './components/hospitalAdmin/HospitalPortalLayout'
@@ -65,6 +66,7 @@ function App() {
         <>
           <Route path="/appointment" element={<PublicAppointmentPage slug={tenantSlug} />} />
           <Route path="/appointment-status" element={<AppointmentStatusPage slug={tenantSlug} />} />
+          <Route path="/my-appointments" element={<MyAppointmentsPage slug={tenantSlug} />} />
         </>
       )}
 

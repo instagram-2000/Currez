@@ -42,6 +42,12 @@ function Header({ config, onBookClick, onStatusClick }) {
               {link.label}
             </a>
           ))}
+          <Link
+            to={{ pathname: '/my-appointments', search: location.search }}
+            className="transition-colors hover:text-heading"
+          >
+            My Appointments
+          </Link>
           <button onClick={onStatusClick} className="cursor-pointer transition-colors hover:text-heading">
             {t('hospital.checkAppointmentStatus')}
           </button>
@@ -87,6 +93,13 @@ function Header({ config, onBookClick, onStatusClick }) {
                 {link.label}
               </a>
             ))}
+            <Link
+              to={{ pathname: '/my-appointments', search: location.search }}
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-heading"
+            >
+              My Appointments
+            </Link>
             <button
               onClick={() => {
                 setMenuOpen(false)
