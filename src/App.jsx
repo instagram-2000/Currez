@@ -4,6 +4,9 @@ import { getTenantSlug } from './utils/subdomain'
 import CompanyLandingPage from './pages/CompanyLandingPage'
 import HospitalLandingPage from './pages/HospitalLandingPage'
 import { AuthProvider } from './contexts/AuthContext'
+import { FeatureProvider } from './contexts/FeatureContext'
+import RequireFeature from './components/hospitalAdmin/RequireFeature'
+import ChatbotPage from './pages/hospitalAdmin/ChatbotPage'
 import RequireSuperAdmin from './components/superadmin/RequireSuperAdmin'
 import SuperAdminLayout from './components/superadmin/SuperAdminLayout'
 import SuperAdminLoginPage from './pages/superadmin/SuperAdminLoginPage'
@@ -81,29 +84,42 @@ function App() {
           <Route path="/login" element={<HospitalLoginPage tenantSlug={tenantSlug} />} />
           <Route path="/dashboard" element={<Outlet />}>
             <Route element={<RequireHospitalStaff tenantSlug={tenantSlug} />}>
-              <Route element={<HospitalPortalLayout tenantSlug={tenantSlug} />}>
-                <Route index element={<Navigate to="overview" replace />} />
-                <Route path="overview" element={<OverviewPage tenantSlug={tenantSlug} />} />
-                <Route path="appointments" element={<AppointmentsPage tenantSlug={tenantSlug} />} />
+              {/* Feature flags for this hospital only resolve once we know
+                  who's logged in, so FeatureProvider mounts here — after
+                  RequireHospitalStaff, wrapping everything else below. */}
+              <Route element={<FeatureProvider><Outlet /></FeatureProvider>}>
+                <Route element={<HospitalPortalLayout tenantSlug={tenantSlug} />}>
+                  <Route index element={<Navigate to="overview" replace />} />
+                  <Route path="overview" element={<OverviewPage tenantSlug={tenantSlug} />} />
+                  <Route path="appointments" element={<AppointmentsPage tenantSlug={tenantSlug} />} />
 
-                {/* Hospital admin + receptionist only */}
-                <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
-                  <Route path="patients" element={<PatientsPage tenantSlug={tenantSlug} />} />
-                </Route>
+                  {/* Hospital admin + receptionist only */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
+                    <Route path="patients" element={<PatientsPage tenantSlug={tenantSlug} />} />
+                  </Route>
 
-                {/* Hospital admin only */}
-                <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN]} />}>
-                  <Route path="staff" element={<StaffPage tenantSlug={tenantSlug} />} />
-                </Route>
+                  {/* Hospital admin only */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN]} />}>
+                    <Route path="staff" element={<StaffPage tenantSlug={tenantSlug} />} />
+                  </Route>
 
-                {/* Receptionist only — read-only doctor schedules */}
-                <Route element={<RequireRole allowedRoles={[ROLES.RECEPTIONIST]} />}>
-                  <Route path="doctors" element={<DoctorsPage tenantSlug={tenantSlug} />} />
-                </Route>
+                  {/* Receptionist only — read-only doctor schedules */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.RECEPTIONIST]} />}>
+                    <Route path="doctors" element={<DoctorsPage tenantSlug={tenantSlug} />} />
+                  </Route>
 
-                {/* Doctor only — self-service schedule */}
-                <Route element={<RequireRole allowedRoles={[ROLES.DOCTOR]} />}>
-                  <Route path="schedule" element={<MySchedulePage />} />
+                  {/* Doctor only — self-service schedule */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.DOCTOR]} />}>
+                    <Route path="schedule" element={<MySchedulePage />} />
+                  </Route>
+
+                  {/* Hospital admin + receptionist, and only if the Super
+                      Admin has enabled the chatbot module for this hospital */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
+                    <Route element={<RequireFeature featureKey="chatbot" />}>
+                      <Route path="chatbot" element={<ChatbotPage />} />
+                    </Route>
+                  </Route>
                 </Route>
               </Route>
             </Route>
