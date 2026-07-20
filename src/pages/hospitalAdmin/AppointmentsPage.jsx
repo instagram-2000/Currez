@@ -5,6 +5,7 @@ import { subscribeUsersByHospital } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES } from '../../utils/roles'
 import { isTimeWithinSchedule } from '../../utils/doctorSchedule'
+import { TABS, TAB_TODAY, categorizeAppointments } from '../../utils/appointmentFilters'
 import BookAppointmentModal from '../../components/hospitalAdmin/BookAppointmentModal'
 import ConfirmPaymentModal from '../../components/hospitalAdmin/ConfirmPaymentModal'
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
@@ -52,6 +53,7 @@ function AppointmentsPage({ tenantSlug }) {
   const [patients, setPatients] = useState([])
   const [staff, setStaff] = useState([])
   const [search, setSearch] = useState('')
+  const [activeTab, setActiveTab] = useState(TAB_TODAY)
   const [showBookModal, setShowBookModal] = useState(false)
   const [confirmingAppointment, setConfirmingAppointment] = useState(null)
   const [completingAppt, setCompletingAppt] = useState(null)
@@ -94,6 +96,11 @@ function AppointmentsPage({ tenantSlug }) {
     return list
   }, [appointments, isDoctor, user.uid, search])
 
+  const categorized = useMemo(() => {
+    if (!appointments) return {}
+    return categorizeAppointments(visible)
+  }, [visible])
+
   if (appointments === null) return <Spinner />
 
   return (
@@ -118,6 +125,22 @@ function AppointmentsPage({ tenantSlug }) {
         className="mt-4 w-full max-w-sm rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none sm:w-72"
       />
 
+      <div className="mt-4 flex gap-1 rounded-xl bg-card-strong p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? 'bg-card text-heading shadow-sm'
+                : 'text-muted hover:text-heading'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-card">
         <table className="min-w-full divide-y divide-line text-sm">
           <thead className="text-left text-xs font-medium uppercase tracking-wide text-faint">
@@ -132,7 +155,7 @@ function AppointmentsPage({ tenantSlug }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {visible.map((appt) => (
+            {(categorized[activeTab] || []).map((appt) => (
               <tr key={appt.id} className="transition-colors hover:bg-card-strong">
                 <td className="px-4 py-3 text-heading">{appt.date}</td>
                 <td className="px-4 py-3 text-muted">{appt.time || '—'}</td>
@@ -207,10 +230,10 @@ function AppointmentsPage({ tenantSlug }) {
                 </td>
               </tr>
             ))}
-            {visible.length === 0 && (
+            {(categorized[activeTab] || []).length === 0 && (
               <tr>
                 <td colSpan={isDoctor ? 5 : 7} className="px-4 py-8 text-center text-faint">
-                  No appointments found.
+                  No {activeTab} appointments found.
                 </td>
               </tr>
             )}
