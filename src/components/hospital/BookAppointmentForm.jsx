@@ -34,7 +34,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const { errors, validate, clearFieldError } = useFormValidation({
-    name: [validators.required('Name is required.')],
+    name: [validators.required('Name is required.'), validators.name('Name should not contain numbers.')],
     phone: [validators.required('Phone is required.'), validators.phone('Enter a valid phone number.')],
     date: [validators.required('Date is required.')],
     time: [validators.required('Time is required.')],

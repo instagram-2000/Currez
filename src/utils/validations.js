@@ -5,8 +5,11 @@ export const validators = {
   email: (msg) => (value) =>
     value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? msg : undefined,
 
+  name: (msg) => (value) =>
+    value && /\d/.test(value) ? msg : undefined,
+
   phone: (msg) => (value) =>
-    value && !/^\+?\d{7,15}$/.test(value.replace(/[\s-]/g, '')) ? msg : undefined,
+    value && !/^\d{10}$/.test(value.replace(/[\s-]/g, '')) ? msg : undefined,
 
   minLength: (min, msg) => (value) =>
     value && String(value).trim().length < min ? msg : undefined,

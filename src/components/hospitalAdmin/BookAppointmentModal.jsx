@@ -26,7 +26,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, preselectedPatien
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { errors, validate, clearFieldError } = useFormValidation({
-    newPatientName: isNewPatient ? [validators.required('Patient name is required.')] : [],
+    newPatientName: isNewPatient ? [validators.required('Patient name is required.'), validators.name('Name should not contain numbers.')] : [],
     newPatientPhone: [validators.phone('Enter a valid phone number.')],
     date: [validators.required('Date is required.')],
     time: [validators.required('Time is required.')],

@@ -146,7 +146,10 @@ function HospitalLoginPage({ tenantSlug }) {
 
         {/* Sign-in panel */}
         <div className="p-8 md:w-3/5">
-          <h2 className="text-xl font-bold text-heading">Sign in</h2>
+          <a href="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-heading">
+            &larr; Back to website
+          </a>
+          <h2 className="mt-3 text-xl font-bold text-heading">Sign in</h2>
           <p className="mt-1 text-sm text-muted">Choose your role to continue.</p>
 
           <div className="mt-5 space-y-2">

@@ -16,7 +16,7 @@ function PatientFormModal({ hospitalId, onCreated, onCancel }) {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { errors, validate, clearFieldError } = useFormValidation({
-    name: [validators.required('Patient name is required.')],
+    name: [validators.required('Patient name is required.'), validators.name('Name should not contain numbers.')],
     phone: [validators.phone('Enter a valid phone number.')],
     email: [validators.email('Enter a valid email address.')],
   })
