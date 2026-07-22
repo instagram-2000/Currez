@@ -5,12 +5,11 @@ import { subscribePatients } from '../../firebase/patients'
 import { subscribeUsersByHospital } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES } from '../../utils/roles'
+import { todayDateString } from '../../utils/dates'
 import StatCard from '../../components/superadmin/StatCard'
 import StatusBadge from '../../components/superadmin/StatusBadge'
 import { PageSpinner } from '../../components/common/Spinner'
 import DoctorOverviewPage from './DoctorOverviewPage'
-
-const todayString = () => new Date().toISOString().slice(0, 10)
 
 function OverviewPage({ tenantSlug }) {
   const { role } = useAuth()
@@ -25,7 +24,7 @@ function HospitalOverview({ tenantSlug }) {
   const [staff, setStaff] = useState([])
 
   useEffect(() => subscribeHospital(tenantSlug, setHospital), [tenantSlug])
-  const today = todayString()
+  const today = todayDateString()
   useEffect(() => subscribeAppointments(tenantSlug, setAppointments, today, today), [tenantSlug, today])
   useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
   useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])

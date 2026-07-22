@@ -11,42 +11,8 @@ import CredentialsDialog from "../../components/superadmin/CredentialsDialog";
 import StatusBadge from "../../components/superadmin/StatusBadge";
 import DoctorScheduleEditor from "../../components/hospitalAdmin/DoctorScheduleEditor";
 import { PageSpinner } from "../../components/common/Spinner";
-import Modal from "../../components/common/Modal";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import NavIcon from "../../components/common/NavIcon";
-
-function ConfirmModal({ title, message, confirmLabel, danger, onConfirm, onCancel }) {
-  return (
-    <Modal onClose={onCancel} className="max-w-sm">
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-          danger ? 'bg-red-500/10 ring-1 ring-inset ring-red-500/20' : 'bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/20'
-        }`}>
-          <NavIcon name={danger ? "close" : "check"} className={`h-5 w-5 ${danger ? 'text-red-600 dark:text-red-400' : 'text-indigo-600 dark:text-indigo-300'}`} />
-        </div>
-        <h2 className="text-base font-semibold text-heading">{title}</h2>
-      </div>
-      <p className="mt-3 text-sm text-muted leading-relaxed">{message}</p>
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          onClick={onCancel}
-          className="cursor-pointer rounded-xl border border-line px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          className={`cursor-pointer rounded-xl px-4 py-2 text-sm font-medium text-white transition-all ${
-            danger
-              ? "bg-red-600 hover:bg-red-500 shadow-sm shadow-red-500/25"
-              : "bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/25"
-          }`}
-        >
-          {confirmLabel}
-        </button>
-      </div>
-    </Modal>
-  );
-}
 
 function StaffPage({ tenantSlug }) {
   const [staff, setStaff] = useState(null);

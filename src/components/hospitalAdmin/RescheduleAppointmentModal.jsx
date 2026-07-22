@@ -2,9 +2,14 @@ import { useMemo, useState } from 'react'
 import { rescheduleAppointment } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
 import { availableSlotsForDate, weekdayKeyForDate, DAY_LABELS } from '../../utils/doctorSchedule'
+import { todayDateString } from '../../utils/dates'
 import TimeSlotPicker from '../common/TimeSlotPicker'
+import Modal from '../common/Modal'
+import NavIcon from '../common/NavIcon'
 
-const todayString = () => new Date().toISOString().slice(0, 10)
+const inputClass =
+  'mt-1 w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-heading focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10'
+const labelClass = 'block text-sm font-medium text-body'
 
 // Opened from the appointments list (usually via the "Schedule changed"
 // warning) to move an already-confirmed appointment to a slot that actually
@@ -64,78 +69,83 @@ function RescheduleAppointmentModal({ appointment, doctors, appointments = [], o
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-xl">
-        <h2 className="text-base font-semibold text-heading">Reschedule appointment</h2>
-        <p className="mt-1 text-sm text-muted">
-          {appointment.patientName} — currently {appointment.date} {appointment.time || '(no time set)'}
-        </p>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-body">Doctor</label>
-          <select
-            value={doctorId}
-            onChange={(e) => handleDoctorChange(e.target.value)}
-            className="mt-1 w-full cursor-pointer rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
-          >
-            {(!doctors || doctors.length === 0) && <option value="">No doctors available</option>}
-            {doctors?.map((d) => (
-              <option key={d.uid} value={d.uid}>
-                {d.displayName} {d.specialization ? `— ${d.specialization}` : ''}
-              </option>
-            ))}
-          </select>
+    <Modal onClose={onClose} className="max-w-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 ring-1 ring-inset ring-amber-500/20">
+          <NavIcon name="schedule" className="h-5 w-5 text-amber-600 dark:text-amber-400" />
         </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-body">Date</label>
-          <input
-            type="date"
-            min={todayString()}
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
-          />
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-body">New time</label>
-          {selectedDoctor ? (
-            <TimeSlotPicker
-              slots={slots}
-              value={time}
-              onChange={setTime}
-              emptyHint={
-                daySchedule && !daySchedule.available
-                  ? `${selectedDoctor.displayName} isn't scheduled to work on ${DAY_LABELS[weekday]}s — pick a different date.`
-                  : undefined
-              }
-            />
-          ) : (
-            <p className="mt-1 text-xs text-faint">Choose a doctor to see available times.</p>
-          )}
-        </div>
-
-        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            disabled={submitting}
-            className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={submitting}
-            className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {submitting ? 'Saving…' : 'Save new time'}
-          </button>
+        <div>
+          <h2 className="text-base font-semibold text-heading">Reschedule appointment</h2>
+          <p className="mt-0.5 text-xs text-faint">
+            {appointment.patientName} — currently {appointment.date} {appointment.time || '(no time set)'}
+          </p>
         </div>
       </div>
-    </div>
+
+      <div className="mt-5">
+        <label className={labelClass}>Doctor</label>
+        <select
+          value={doctorId}
+          onChange={(e) => handleDoctorChange(e.target.value)}
+          className={`${inputClass} cursor-pointer`}
+        >
+          {(!doctors || doctors.length === 0) && <option value="">No doctors available</option>}
+          {doctors?.map((d) => (
+            <option key={d.uid} value={d.uid}>
+              {d.displayName} {d.specialization ? `— ${d.specialization}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mt-4">
+        <label className={labelClass}>Date</label>
+        <input
+          type="date"
+          min={todayDateString()}
+          value={date}
+          onChange={(e) => handleDateChange(e.target.value)}
+          className={inputClass}
+        />
+      </div>
+
+      <div className="mt-4">
+        <label className={labelClass}>New time</label>
+        {selectedDoctor ? (
+          <TimeSlotPicker
+            slots={slots}
+            value={time}
+            onChange={setTime}
+            emptyHint={
+              daySchedule && !daySchedule.available
+                ? `${selectedDoctor.displayName} isn't scheduled to work on ${DAY_LABELS[weekday]}s — pick a different date.`
+                : undefined
+            }
+          />
+        ) : (
+          <p className="mt-1 text-xs text-faint">Choose a doctor to see available times.</p>
+        )}
+      </div>
+
+      {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          onClick={onClose}
+          disabled={submitting}
+          className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={submitting}
+          className="cursor-pointer rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500 hover:shadow-md hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-sm"
+        >
+          {submitting ? 'Saving…' : 'Save new time'}
+        </button>
+      </div>
+    </Modal>
   )
 }
 

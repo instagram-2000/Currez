@@ -5,9 +5,10 @@ import { useAuth } from '../../contexts/AuthContext'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import BrandingPreview from '../../components/superadmin/BrandingPreview'
+import NavIcon from '../../components/common/NavIcon'
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
+  'mt-1 w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-heading focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10'
 const labelClass = 'block text-sm font-medium text-body'
 
 function Field({ label, children }) {
@@ -15,6 +16,21 @@ function Field({ label, children }) {
     <div>
       <label className={labelClass}>{label}</label>
       {children}
+    </div>
+  )
+}
+
+function FormSection({ icon, title, hint, children }) {
+  return (
+    <div className="rounded-2xl border border-line bg-card p-5">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 ring-1 ring-indigo-500/20 ring-inset dark:text-indigo-300">
+          <NavIcon name={icon} className="h-4 w-4" />
+        </span>
+        <h3 className="text-sm font-semibold text-heading">{title}</h3>
+      </div>
+      {hint && <p className="mt-1.5 text-xs text-faint">{hint}</p>}
+      <div className="mt-4 space-y-4">{children}</div>
     </div>
   )
 }
@@ -27,13 +43,13 @@ function ColorField({ label, value, onChange }) {
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 shrink-0 cursor-pointer rounded border border-line bg-card"
+          className="h-9 w-12 shrink-0 cursor-pointer rounded-lg border border-line bg-card"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-heading focus:border-line-strong focus:outline-none"
+          className="w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-heading focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
         />
       </div>
     </Field>
@@ -123,72 +139,67 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
   }
 
   const form = (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Subdomain slug">
-          <input
-            type="text"
-            disabled={mode === 'edit'}
-            placeholder="e.g. sunrise-hospital"
-            value={slug}
-            onChange={(e) => { setSlug(e.target.value); clearFieldError('slug') }}
-            className={`${inputClass} ${mode === 'edit' ? 'cursor-not-allowed opacity-50' : ''}`}
-          />
-          {mode === 'create' && (
-            <p className="mt-1 text-xs text-faint">
-              Lowercase letters, numbers and hyphens only. Cannot be changed later.
-            </p>
-          )}
-          {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
-        </Field>
-
-        <Field label="Hospital name">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); clearFieldError('title') }}
-            className={inputClass}
-          />
-          {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
-        </Field>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-semibold text-heading">Hero</h3>
-        <p className="mt-1 text-xs text-faint">
-          Shown on the public landing page. Leave blank to fall back to a generic welcome message.
-        </p>
-        <div className="mt-3 space-y-4">
-          <Field label="Headline">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <FormSection icon="hospitals" title="Identity">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Subdomain slug">
             <input
               type="text"
-              placeholder="e.g. Care you can trust, any hour of the day."
-              value={heroHeadline}
-              onChange={(e) => setHeroHeadline(e.target.value)}
-              className={inputClass}
+              disabled={mode === 'edit'}
+              placeholder="e.g. sunrise-hospital"
+              value={slug}
+              onChange={(e) => { setSlug(e.target.value); clearFieldError('slug') }}
+              className={`${inputClass} ${mode === 'edit' ? 'cursor-not-allowed opacity-50' : ''}`}
             />
+            {mode === 'create' && (
+              <p className="mt-1 text-xs text-faint">
+                Lowercase letters, numbers and hyphens only. Cannot be changed later.
+              </p>
+            )}
+            {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
           </Field>
-          <Field label="Subtitle">
-            <textarea
-              rows={2}
-              placeholder="A short paragraph describing the hospital."
-              value={heroSubtitle}
-              onChange={(e) => setHeroSubtitle(e.target.value)}
+
+          <Field label="Hospital name">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); clearFieldError('title') }}
               className={inputClass}
             />
+            {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
           </Field>
         </div>
-      </div>
+      </FormSection>
 
-      <div>
-        <h3 className="text-sm font-semibold text-heading">Emergency contact</h3>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <FormSection icon="pulse" title="Hero" hint="Shown on the public landing page. Leave blank to fall back to a generic welcome message.">
+        <Field label="Headline">
+          <input
+            type="text"
+            placeholder="e.g. Care you can trust, any hour of the day."
+            value={heroHeadline}
+            onChange={(e) => setHeroHeadline(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Subtitle">
+          <textarea
+            rows={2}
+            placeholder="A short paragraph describing the hospital."
+            value={heroSubtitle}
+            onChange={(e) => setHeroSubtitle(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      </FormSection>
+
+      <FormSection icon="phone" title="Emergency contact">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-body">
             <input
               type="checkbox"
               checked={emergencyEnabled}
               onChange={(e) => setEmergencyEnabled(e.target.checked)}
-              className="h-4 w-4 cursor-pointer rounded border-line-strong bg-card"
+              className="h-4 w-4 cursor-pointer rounded border-line-strong bg-card accent-indigo-600"
             />
             Show 24/7 emergency bar
           </label>
@@ -202,17 +213,16 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             {errors.emergencyPhone && <p className="mt-1 text-xs text-red-500">{errors.emergencyPhone}</p>}
           </Field>
         </div>
-      </div>
+      </FormSection>
 
-      <div>
-        <h3 className="text-sm font-semibold text-heading">Theme</h3>
-        <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div>
+      <FormSection icon="star" title="Theme">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ColorField label="Primary color" value={primaryColor} onChange={setPrimaryColor} />
               <ColorField label="Secondary color" value={secondColor} onChange={setSecondColor} />
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Background image URL">
                 <input
                   type="url"
@@ -235,7 +245,7 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-faint uppercase tracking-wide">Live preview</p>
+            <p className="mb-2 text-xs font-medium tracking-wide text-faint uppercase">Live preview</p>
             <BrandingPreview
               title={title}
               primaryColor={primaryColor}
@@ -247,11 +257,10 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      <div>
-        <h3 className="text-sm font-semibold text-heading">Contact / footer</h3>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <FormSection icon="mail" title="Contact / footer">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Address">
             <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
           </Field>
@@ -264,23 +273,20 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </Field>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Years serving the city">
-            <input
-              type="number"
-              min="0"
-              value={yearsServing}
-              onChange={(e) => { setYearsServing(e.target.value); clearFieldError('yearsServing') }}
-              className={inputClass}
-            />
-            {errors.yearsServing && <p className="mt-1 text-xs text-red-500">{errors.yearsServing}</p>}
-          </Field>
-        </div>
-      </div>
+        <Field label="Years serving the city">
+          <input
+            type="number"
+            min="0"
+            value={yearsServing}
+            onChange={(e) => { setYearsServing(e.target.value); clearFieldError('yearsServing') }}
+            className={`${inputClass} max-w-xs`}
+          />
+          {errors.yearsServing && <p className="mt-1 text-xs text-red-500">{errors.yearsServing}</p>}
+        </Field>
+      </FormSection>
 
-      <div>
-        <h3 className="text-sm font-semibold text-heading">OPD hours</h3>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <FormSection icon="schedule" title="OPD hours">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Mon – Sat">
             <input
               type="text"
@@ -309,18 +315,19 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
             />
           </Field>
         </div>
+      </FormSection>
+
+      <div className="flex items-center gap-4 pt-1">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="cursor-pointer rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500 hover:shadow-md hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-sm"
+        >
+          {submitting ? 'Saving…' : mode === 'create' ? 'Create hospital' : 'Save changes'}
+        </button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        {saved && <p className="text-sm font-medium text-emerald-500">Saved.</p>}
       </div>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {saved && <p className="text-sm text-emerald-500">Saved.</p>}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="cursor-pointer rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {submitting ? 'Saving…' : mode === 'create' ? 'Create hospital' : 'Save changes'}
-      </button>
     </form>
   )
 
@@ -328,10 +335,19 @@ function HospitalFormPage({ mode = 'create', hospital, onSaved }) {
 
   return (
     <div className="max-w-2xl">
-      <Link to="/superadmin/hospitals" className="text-sm text-muted hover:text-heading">
-        &larr; Back to hospitals
+      <Link
+        to="/superadmin/hospitals"
+        className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-heading"
+      >
+        <NavIcon name="arrowLeft" className="h-4 w-4" />
+        Back to hospitals
       </Link>
-      <h1 className="mt-2 text-xl font-semibold text-heading">New hospital</h1>
+      <div className="mt-3 flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-600 ring-1 ring-indigo-500/20 ring-inset dark:text-indigo-300">
+          <NavIcon name="hospitals" className="h-5 w-5" />
+        </span>
+        <h1 className="text-xl font-semibold text-heading">New hospital</h1>
+      </div>
       <div className="mt-6">{form}</div>
     </div>
   )

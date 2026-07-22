@@ -5,6 +5,7 @@ import { subscribeActiveDoctors } from '../../firebase/users'
 import { createPatient } from '../../firebase/patients'
 import { createAppointment, getDoctorBookedTimes } from '../../firebase/appointments'
 import { weekdayKeyForDate, availableSlotsForDate } from '../../utils/doctorSchedule'
+import { todayDateString } from '../../utils/dates'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -15,7 +16,6 @@ import AppointmentTokenCard from './AppointmentTokenCard'
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-base text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
 const labelClass = 'block text-sm font-medium text-body'
-const todayString = () => new Date().toISOString().slice(0, 10)
 
 // Shared by the standalone /appointment page and the popup modal triggered
 // from the landing page header/hero/footer — same form, same success state,
@@ -32,7 +32,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [doctorId, setDoctorId] = useState(initialDoctor)
-  const [date, setDate] = useState(todayString())
+  const [date, setDate] = useState(todayDateString())
   const [time, setTime] = useState('')
   const [bookedTimes, setBookedTimes] = useState([])
   const [error, setError] = useState('')
@@ -208,7 +208,7 @@ function BookAppointmentForm({ slug, onCheckStatus }) {
             <label className={labelClass}>{t('booking.preferredDate')}</label>
             <input
               type="date"
-              min={todayString()}
+              min={todayDateString()}
               value={date}
               onChange={(e) => { setDate(e.target.value); clearFieldError('date') }}
               className={inputClass}

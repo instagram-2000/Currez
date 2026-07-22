@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { subscribeAppointments } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
+import { todayDateString } from '../../utils/dates'
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
 import NavIcon from '../../components/common/NavIcon'
-
-const todayString = () => new Date().toISOString().slice(0, 10)
 
 const STATUS_STYLES = {
   scheduled: 'bg-sky-500/10 text-sky-600 ring-sky-500/20 dark:text-sky-400',
@@ -20,7 +19,7 @@ function DoctorOverviewPage({ tenantSlug }) {
   const [completingAppt, setCompletingAppt] = useState(null)
   const [viewingAppt, setViewingAppt] = useState(null)
 
-  const today = todayString()
+  const today = todayDateString()
   useEffect(() => subscribeAppointments(tenantSlug, setAppointments, today), [tenantSlug, today])
 
   const mine = appointments.filter((a) => a.doctorId === user.uid && a.status !== 'pending')

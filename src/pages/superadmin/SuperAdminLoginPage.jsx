@@ -11,7 +11,7 @@ import NavIcon from '../../components/common/NavIcon'
 import PasswordInput from '../../components/common/PasswordInput'
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
+  'mt-1 w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10'
 const labelClass = 'block text-sm font-medium text-body'
 
 function AuthCard({ children }) {
@@ -29,7 +29,7 @@ function AuthCard({ children }) {
         <NavIcon name="arrowLeft" className="h-4 w-4" />
         Back to site
       </Link>
-      <div className="relative w-full max-w-sm rounded-2xl border border-line bg-surface/60 p-8 backdrop-blur">
+      <div className="relative w-full max-w-sm rounded-2xl border border-line bg-surface/70 p-8 shadow-xl shadow-black/5 backdrop-blur">
         {children}
       </div>
     </div>
@@ -56,11 +56,14 @@ function SuperAdminLoginPage() {
     return (
       <AuthCard>
         <div className="text-center">
-          <h1 className="text-lg font-semibold text-heading">Not authorized</h1>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 ring-1 ring-red-500/20 ring-inset">
+            <NavIcon name="lock" className="h-5 w-5 text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="mt-4 text-lg font-semibold text-heading">Not authorized</h1>
           <p className="mt-2 text-sm text-muted">{user.email} does not have super admin access.</p>
           <button
             onClick={() => signOutUser()}
-            className="mt-6 w-full cursor-pointer rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+            className="mt-6 w-full cursor-pointer rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500 hover:shadow-md"
           >
             Sign out
           </button>
@@ -103,7 +106,10 @@ function SuperAdminLoginPage() {
 
   return (
     <AuthCard>
-      <h1 className="text-xl font-semibold text-heading">Super Admin</h1>
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 ring-1 ring-indigo-500/20 ring-inset">
+        <NavIcon name="hospitals" className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+      </div>
+      <h1 className="mt-4 text-xl font-bold tracking-tight text-heading">Super Admin</h1>
       <p className="mt-1 text-sm text-muted">Sign in to manage hospitals and staff.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -146,7 +152,7 @@ function SuperAdminLoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full cursor-pointer rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full cursor-pointer rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500 hover:shadow-md hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-sm"
         >
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>

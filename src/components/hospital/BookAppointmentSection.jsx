@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPatient } from '../../firebase/patients'
 import { createAppointment } from '../../firebase/appointments'
+import { todayDateString } from '../../utils/dates'
 import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import AppointmentTokenCard from './AppointmentTokenCard'
@@ -9,7 +10,6 @@ import Reveal from '../common/Reveal'
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
 const labelClass = 'block text-sm font-medium text-body'
-const todayString = () => new Date().toISOString().slice(0, 10)
 
 // A lighter, no-account-needed request form — unlike the full /appointment
 // page it doesn't ask for a doctor or exact time; reception calls back to
@@ -21,7 +21,7 @@ function BookAppointmentSection({ config }) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [department, setDepartment] = useState(departments[0]?.name || '')
-  const [date, setDate] = useState(todayString())
+  const [date, setDate] = useState(todayDateString())
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(null)
@@ -122,7 +122,7 @@ function BookAppointmentSection({ config }) {
               <input
                 type="date"
                 required
-                min={todayString()}
+                min={todayDateString()}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className={inputClass}

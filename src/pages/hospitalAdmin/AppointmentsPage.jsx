@@ -5,6 +5,7 @@ import { subscribeUsersByHospital } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { ROLES } from '../../utils/roles'
 import { isTimeWithinSchedule } from '../../utils/doctorSchedule'
+import { shiftDateString } from '../../utils/dates'
 import { TABS, TAB_TODAY, categorizeAppointments } from '../../utils/appointmentFilters'
 import BookAppointmentModal from '../../components/hospitalAdmin/BookAppointmentModal'
 import ConfirmPaymentModal from '../../components/hospitalAdmin/ConfirmPaymentModal'
@@ -43,8 +44,8 @@ function AppointmentStatusBadge({ status }) {
 
 function AppointmentsPage({ tenantSlug }) {
   const { role, user } = useAuth()
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)
-  const weekLater = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  const weekAgo = shiftDateString(-7)
+  const weekLater = shiftDateString(7)
   const isDoctor = role === ROLES.DOCTOR
   const canBook = role === ROLES.HOSPITAL_ADMIN || role === ROLES.RECEPTIONIST
   const canConfirm = canBook

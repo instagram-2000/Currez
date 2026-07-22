@@ -13,15 +13,16 @@ import StaffFormModal from '../../components/superadmin/StaffFormModal'
 import CredentialsDialog from '../../components/superadmin/CredentialsDialog'
 import StatCard from '../../components/superadmin/StatCard'
 import StatusBadge from '../../components/superadmin/StatusBadge'
-import Spinner from '../../components/common/Spinner'
+import { PageSpinner } from '../../components/common/Spinner'
+import NavIcon from '../../components/common/NavIcon'
 import TenantNotFound from '../TenantNotFound'
 
 const TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'branding', label: 'Branding & Contact' },
-  { key: 'content', label: 'Content' },
-  { key: 'features', label: 'Modules' },
-  { key: 'staff', label: 'Staff' },
+  { key: 'overview', label: 'Overview', icon: 'overview' },
+  { key: 'branding', label: 'Branding & Contact', icon: 'profile' },
+  { key: 'content', label: 'Content', icon: 'clipboard' },
+  { key: 'features', label: 'Modules', icon: 'dashboard' },
+  { key: 'staff', label: 'Staff', icon: 'staff' },
 ]
 
 function HospitalDetailPage() {
@@ -47,7 +48,7 @@ function HospitalDetailPage() {
   useEffect(() => setActiveTab('overview'), [slug])
   useEffect(() => setFeatures(undefined), [slug])
 
-  if (hospital === undefined) return <Spinner />
+  if (hospital === undefined) return <PageSpinner />
   if (hospital === null) return <TenantNotFound slug={slug} />
 
   async function handleResetPassword(member) {
@@ -71,46 +72,54 @@ function HospitalDetailPage() {
 
   return (
     <div className="max-w-4xl">
-      <Link to="/superadmin/hospitals" className="text-sm text-muted hover:text-heading">
-        &larr; Back to hospitals
+      <Link
+        to="/superadmin/hospitals"
+        className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-heading"
+      >
+        <NavIcon name="arrowLeft" className="h-4 w-4" />
+        Back to hospitals
       </Link>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-heading">{hospital.title}</h1>
-          <p className="text-sm text-muted">{hospital.slug}</p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-lg font-bold text-indigo-600 ring-1 ring-indigo-500/20 ring-inset dark:text-indigo-300">
+            {(hospital.title || '?')[0].toUpperCase()}
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold text-heading">{hospital.title}</h1>
+            <p className="text-sm text-muted">{hospital.slug}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={hospital.status} />
           <button
             onClick={toggleStatus}
             disabled={togglingStatus}
-            className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-xl border border-line px-3.5 py-2 text-sm font-medium text-body transition-colors hover:bg-card-strong hover:text-heading disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Switch to {hospital.status === 'trial' ? 'Ongoing' : 'Trial'}
+            {togglingStatus ? 'Updating…' : `Switch to ${hospital.status === 'trial' ? 'Ongoing' : 'Trial'}`}
           </button>
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto border-b border-line">
-        <nav className="-mb-px flex gap-6">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`cursor-pointer border-b-2 px-1 pb-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab.key
-                  ? 'border-indigo-500 text-heading'
-                  : 'border-transparent text-muted hover:text-heading'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="mt-6 flex gap-1 overflow-x-auto rounded-xl bg-card-strong p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+              activeTab === tab.key
+                ? 'bg-card text-heading shadow-sm'
+                : 'text-muted hover:text-heading'
+            }`}
+          >
+            <NavIcon name={tab.icon} className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 animate-fade-in-up">
         {activeTab === 'overview' && (
           <section>
             <h2 className="text-sm font-semibold text-heading">Activity</h2>
@@ -153,7 +162,7 @@ function HospitalDetailPage() {
 
         {activeTab === 'features' && (
           features === undefined ? (
-            <Spinner />
+            <PageSpinner />
           ) : (
             <FeatureManagementPanel hospitalId={hospital.slug} features={features} />
           )
@@ -165,54 +174,77 @@ function HospitalDetailPage() {
               <h2 className="text-sm font-semibold text-heading">Staff</h2>
               <button
                 onClick={() => setShowStaffForm(true)}
-                className="cursor-pointer rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500 hover:shadow-md hover:shadow-indigo-500/30 active:scale-[0.98]"
               >
-                + Add Staff
+                <NavIcon name="staff" className="h-4 w-4" />
+                Add Staff
               </button>
             </div>
 
-            <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card">
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
               <table className="min-w-full divide-y divide-line text-sm">
-                <thead className="text-left text-xs font-medium uppercase tracking-wide text-faint">
-                  <tr>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3" />
+                <thead>
+                  <tr className="border-b border-line bg-card-strong/30">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wider text-faint uppercase">Name</th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wider text-faint uppercase">Email</th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wider text-faint uppercase">Role</th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wider text-faint uppercase">Status</th>
+                    <th className="px-5 py-3.5 text-right text-xs font-semibold tracking-wider text-faint uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {staff.map((member) => (
-                    <tr key={member.uid} className="transition-colors hover:bg-card-strong">
-                      <td className="px-4 py-3 font-medium text-heading">{member.displayName}</td>
-                      <td className="px-4 py-3 text-muted">{member.email}</td>
-                      <td className="px-4 py-3 text-muted">{ROLE_LABELS[member.role] || member.role}</td>
-                      <td className="px-4 py-3">
+                    <tr key={member.uid} className="group transition-colors hover:bg-card-strong/50">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-600 ring-1 ring-violet-500/20 ring-inset dark:text-violet-300">
+                            {(member.displayName || '?')[0].toUpperCase()}
+                          </span>
+                          <span className="font-medium text-heading">{member.displayName}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-muted">{member.email}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="inline-flex items-center rounded-lg bg-card-strong px-2.5 py-1 text-xs font-medium text-muted">
+                          {ROLE_LABELS[member.role] || member.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
                         <StatusBadge status={member.status} kind="user" />
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleResetPassword(member)}
-                          className="mr-4 cursor-pointer text-sm font-medium text-body hover:text-heading"
-                        >
-                          {resetSentFor === member.uid ? 'Reset email sent' : 'Reset password'}
-                        </button>
-                        <button
-                          onClick={() =>
-                            setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')
-                          }
-                          className="cursor-pointer text-sm font-medium text-body hover:text-heading"
-                        >
-                          {member.status === 'active' ? 'Deactivate' : 'Reactivate'}
-                        </button>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleResetPassword(member)}
+                            className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
+                          >
+                            {resetSentFor === member.uid ? 'Sent' : 'Reset password'}
+                          </button>
+                          <button
+                            onClick={() =>
+                              setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')
+                            }
+                            className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              member.status === 'active'
+                                ? 'text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                                : 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+                            }`}
+                          >
+                            {member.status === 'active' ? 'Deactivate' : 'Reactivate'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {staff.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-faint">
-                        No staff assigned yet.
+                      <td colSpan={5} className="px-5 py-16 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                            <NavIcon name="staff" className="h-6 w-6 text-faint" />
+                          </div>
+                          <p className="mt-3 text-sm font-medium text-muted">No staff assigned yet</p>
+                        </div>
                       </td>
                     </tr>
                   )}

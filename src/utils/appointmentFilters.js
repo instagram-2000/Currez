@@ -1,5 +1,4 @@
-const TODAY = new Date()
-const TODAY_STR = TODAY.toISOString().slice(0, 10)
+import { todayDateString } from './dates'
 
 function dateStringToDate(s) {
   return new Date(`${s}T00:00:00`)
@@ -20,7 +19,7 @@ export const TABS = [
   { key: TAB_UPCOMING, label: 'Upcoming' },
 ]
 
-export function categorizeAppointments(appointments, todayStr = TODAY_STR) {
+export function categorizeAppointments(appointments, todayStr = todayDateString()) {
   const past = []
   const today = []
   const upcoming = []
