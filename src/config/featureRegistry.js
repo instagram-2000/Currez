@@ -102,6 +102,28 @@ export const FEATURE_REGISTRY = [
     isCore: false,
     defaultEnabled: false,
   },
+  {
+    key: 'billing',
+    label: 'Billing',
+    description: 'Generate itemized invoices for visits and track paid/due status.',
+    icon: 'billing',
+    path: 'billing',
+    allowedRoles: [ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST],
+    category: FEATURE_CATEGORIES.OPERATIONS,
+    isCore: false,
+    defaultEnabled: false,
+  },
+  {
+    key: 'prescriptions',
+    label: 'Prescriptions',
+    description: 'Searchable prescription history with a printable, letterhead-style prescription document.',
+    icon: 'prescription',
+    path: 'prescriptions',
+    allowedRoles: [ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR],
+    category: FEATURE_CATEGORIES.CLINICAL,
+    isCore: false,
+    defaultEnabled: false,
+  },
 ]
 
 export function getFeatureDefinition(key) {

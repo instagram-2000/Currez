@@ -96,6 +96,16 @@ export function setUserStatus(uid, status) {
   return updateDoc(doc(db, USERS_COLLECTION, uid), { status, updatedAt: serverTimestamp() })
 }
 
+// Hospital Admin-only, Receptionist-only toggle: lets an admin trust some
+// receptionists with Billing (create invoices, record payments) and not
+// others, independent of the blanket RECEPTIONIST role. Missing/undefined
+// on a user doc means allowed — see firestore.rules' isBillingStaffOf —
+// so every receptionist that existed before this flag was added keeps its
+// current access; only an explicit `false` here takes it away.
+export function setUserBillingAccess(uid, enabled) {
+  return updateDoc(doc(db, USERS_COLLECTION, uid), { billingAccess: enabled, updatedAt: serverTimestamp() })
+}
+
 export async function hasActiveStaffForHospital(hospitalId) {
   const q = query(
     collection(db, USERS_COLLECTION),

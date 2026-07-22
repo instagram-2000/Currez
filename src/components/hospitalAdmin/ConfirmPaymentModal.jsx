@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { confirmAppointment } from '../../firebase/appointments'
+import { autoCreateConsultationInvoice } from '../../firebase/billing'
 import { useAuth } from '../../contexts/AuthContext'
+import { useFeature } from '../../hooks/useFeature'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import { availableSlotsForDate, isTimeWithinSchedule, weekdayKeyForDate, DAY_LABELS } from '../../utils/doctorSchedule'
@@ -20,6 +22,7 @@ const labelClass = 'block text-sm font-medium text-body'
 // whatever the patient originally picked.
 function ConfirmPaymentModal({ appointment, doctors, appointments = [], onClose }) {
   const { user } = useAuth()
+  const { enabled: billingEnabled } = useFeature('billing')
   const needsDoctor = !appointment.doctorId
   const [doctorId, setDoctorId] = useState(appointment.doctorId || doctors?.[0]?.uid || '')
   const [date, setDate] = useState(appointment.date)
@@ -93,6 +96,24 @@ function ConfirmPaymentModal({ appointment, doctors, appointments = [], onClose 
         date,
         time,
         ...(needsDoctor ? { doctorId, doctorName: assignedDoctor?.displayName || '' } : {}),
+      })
+      // Best-effort — starts the invoice automatically so front desk doesn't
+      // have to remember a separate step; never blocks confirmation itself
+      // (autoCreateConsultationInvoice swallows its own errors), just
+      // awaited so the write has a chance to land before this modal closes.
+      await autoCreateConsultationInvoice({
+        billingEnabled,
+        hospitalId: appointment.hospitalId,
+        appointmentId: appointment.id,
+        patientId: appointment.patientId,
+        patientName: appointment.patientName,
+        patientPhone: appointment.patientPhone,
+        doctorId,
+        doctorName: assignedDoctor?.displayName || appointment.doctorName,
+        date,
+        time,
+        consultationFee: assignedDoctor?.consultationFee,
+        createdBy: user.uid,
       })
       onClose()
     } catch (err) {

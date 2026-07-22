@@ -28,6 +28,8 @@ import DoctorsPage from './pages/hospitalAdmin/DoctorsPage'
 import MySchedulePage from './pages/hospitalAdmin/MySchedulePage'
 import DoctorProfilePage from './pages/DoctorProfilePage'
 import DoctorProfileEditor from './pages/hospitalAdmin/DoctorProfileEditor'
+import BillingPage from './pages/hospitalAdmin/BillingPage'
+import PrescriptionsPage from './pages/hospitalAdmin/PrescriptionsPage'
 import { ROLES } from './utils/roles'
 
 function App() {
@@ -122,6 +124,22 @@ function App() {
                   <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
                     <Route element={<RequireFeature featureKey="chatbot" />}>
                       <Route path="chatbot" element={<ChatbotPage />} />
+                    </Route>
+                  </Route>
+
+                  {/* Hospital admin + receptionist, and only if the Super
+                      Admin has enabled Billing for this hospital */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
+                    <Route element={<RequireFeature featureKey="billing" />}>
+                      <Route path="billing" element={<BillingPage tenantSlug={tenantSlug} />} />
+                    </Route>
+                  </Route>
+
+                  {/* Hospital admin, receptionist and doctor, and only if
+                      the Super Admin has enabled Prescriptions for this hospital */}
+                  <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR]} />}>
+                    <Route element={<RequireFeature featureKey="prescriptions" />}>
+                      <Route path="prescriptions" element={<PrescriptionsPage tenantSlug={tenantSlug} />} />
                     </Route>
                   </Route>
                 </Route>

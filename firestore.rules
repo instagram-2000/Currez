@@ -58,6 +58,22 @@ service cloud.firestore {
         get(/databases/$(database)/documents/hospitalFeatures/$(hospitalId)).data.features[featureKey] == true;
     }
 
+    // Whether this staff member may operate Billing for their own hospital.
+    // Hospital Admin always can; a Receptionist can unless a Hospital Admin
+    // has explicitly turned it off for them (see setUserBillingAccess in
+    // firebase/users.js) — get(field, true) defaults to allowed when the
+    // field is missing, so every receptionist that existed before this flag
+    // was added keeps working exactly as before; only an explicit `false`
+    // takes access away.
+    function isBillingStaffOf(hospitalId) {
+      return hasUserDoc() &&
+        currentUserDoc().status == 'active' &&
+        currentUserDoc().hospitalId == hospitalId &&
+        (currentUserDoc().role == 'HOSPITAL_ADMIN' ||
+         (currentUserDoc().role == 'RECEPTIONIST' && currentUserDoc().get('billingAccess', true) == true)) &&
+        hospitalHasFeature(hospitalId, 'billing');
+    }
+
     // A doctor may update their own record (schedule, specialization,
     // display name) but never their role, hospital, status or email —
     // those stay hospital-admin/superadmin-only.
@@ -193,6 +209,104 @@ service cloud.firestore {
       allow list: if isSuperAdmin();
       allow create, update, delete: if isSuperAdmin();
     }
+
+    // Billing module (src/config/featureRegistry.js key 'billing'). One
+    // invoice per appointment — doc id == appointmentId (see createInvoice
+    // in src/firebase/billing.js). Feature-gated because, unlike
+    // appointments/patients, this collection has no reason to exist for a
+    // hospital that hasn't turned Billing on.
+    match /invoices/{invoiceId} {
+      // Split from `list` deliberately: a `get` can target an id that
+      // doesn't exist yet (resource is then null), so resource.data must be
+      // guarded by exists() first — referencing it unconditionally errors
+      // out as permission-denied even for a legitimately-authorized caller,
+      // which is exactly what broke createInvoice() before it stopped
+      // doing its own pre-check (see the comment there). `list` never has
+      // this problem: a query only ever evaluates rules against documents
+      // that do exist.
+      allow get: if isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/invoices/$(invoiceId)) &&
+         isHospitalStaffOf(resource.data.hospitalId) &&
+         hospitalHasFeature(resource.data.hospitalId, 'billing'));
+      allow list: if isSuperAdmin() ||
+        (isHospitalStaffOf(resource.data.hospitalId) && hospitalHasFeature(resource.data.hospitalId, 'billing'));
+
+      // The doc id must equal its own appointmentId (one invoice per visit,
+      // enforced here too, not just by the client — see createInvoice's
+      // comment) and the money fields must be internally consistent, so a
+      // client can't call the SDK directly to forge a total that doesn't
+      // match its own line items.
+      allow create: if isBillingStaffOf(request.resource.data.hospitalId) &&
+        request.resource.data.status == 'due' &&
+        request.resource.data.appointmentId == invoiceId &&
+        request.resource.data.lineItems is list && request.resource.data.lineItems.size() > 0 &&
+        request.resource.data.subtotal is number && request.resource.data.subtotal >= 0 &&
+        request.resource.data.discount is number && request.resource.data.discount >= 0 &&
+        request.resource.data.total is number && request.resource.data.total >= 0 &&
+        request.resource.data.total == request.resource.data.subtotal - request.resource.data.discount;
+
+      // Three, and only three, ways an invoice may change after creation —
+      // nothing else is ever allowed, so a client can't smuggle an amount
+      // edit in alongside a status change:
+      //   1) add a charge (room, dressing, tests, ...) — only while still
+      //      'due', lineItems/subtotal only ever grow, identity fixed;
+      //   2) record payment — due -> paid, every money/identity field
+      //      frozen exactly as it was;
+      //   3) void — Hospital Admin only, from any non-void status, every
+      //      money/identity field frozen exactly as it was.
+      allow update: if
+        (
+          isBillingStaffOf(resource.data.hospitalId) &&
+          resource.data.status == 'due' &&
+          request.resource.data.status == 'due' &&
+          request.resource.data.hospitalId == resource.data.hospitalId &&
+          request.resource.data.appointmentId == resource.data.appointmentId &&
+          request.resource.data.lineItems is list &&
+          request.resource.data.lineItems.size() >= resource.data.lineItems.size() &&
+          request.resource.data.subtotal is number && request.resource.data.subtotal >= resource.data.subtotal &&
+          request.resource.data.discount is number && request.resource.data.discount >= 0 &&
+          request.resource.data.total is number && request.resource.data.total >= 0 &&
+          request.resource.data.total == request.resource.data.subtotal - request.resource.data.discount
+        ) ||
+        (
+          isBillingStaffOf(resource.data.hospitalId) &&
+          resource.data.status == 'due' &&
+          request.resource.data.status == 'paid' &&
+          request.resource.data.hospitalId == resource.data.hospitalId &&
+          request.resource.data.appointmentId == resource.data.appointmentId &&
+          request.resource.data.lineItems == resource.data.lineItems &&
+          request.resource.data.subtotal == resource.data.subtotal &&
+          request.resource.data.discount == resource.data.discount &&
+          request.resource.data.total == resource.data.total
+        ) ||
+        (
+          isHospitalAdminOf(resource.data.hospitalId) &&
+          hospitalHasFeature(resource.data.hospitalId, 'billing') &&
+          resource.data.status != 'void' &&
+          request.resource.data.status == 'void' &&
+          request.resource.data.hospitalId == resource.data.hospitalId &&
+          request.resource.data.appointmentId == resource.data.appointmentId &&
+          request.resource.data.lineItems == resource.data.lineItems &&
+          request.resource.data.subtotal == resource.data.subtotal &&
+          request.resource.data.discount == resource.data.discount &&
+          request.resource.data.total == resource.data.total
+        ) ||
+        isSuperAdmin();
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // Prescriptions module (src/config/featureRegistry.js key
+    // 'prescriptions') deliberately has NO collection/rule of its own — it
+    // only presents data that already lives on `appointments` (the
+    // `prescription`/`tests`/`concerns` fields written by
+    // completeAppointmentWithNotes), which core Appointments access already
+    // covers for every role that needs it. Per NEW_MODULE_DEVELOPMENT_GUIDE
+    // §8: a feature flag only needs its own rule when it's the thing
+    // protecting data nothing else already protects — here there's nothing
+    // new to protect, so `hospitalHasFeature(..., 'prescriptions')` is
+    // enforced client-side only (RequireFeature + the registry-driven nav),
+    // same as it would be for any other read-only view over core data.
 
     match /{document=**} {
       allow read, write: if false;

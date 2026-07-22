@@ -141,3 +141,13 @@ body {
 .prose-sm a:hover { color: var(--color-heading); }
 .prose-sm hr { border: none; border-top: 1px solid var(--color-line); margin: 1.5rem 0; }
 .prose-sm code { font-family: var(--font-plex-mono); font-size: 0.85em; background: var(--color-card-strong); padding: 0.15rem 0.35rem; border-radius: 0.25rem; }
+
+/* Printing: hide the whole live app and print only whatever PrintPortal
+   (src/components/common/PrintPortal.jsx) has rendered as a sibling of
+   #root — see that file for why a portal, not a visibility trick scoped to
+   an element inside the modal, is what actually works here. */
+@media print {
+  #root {
+    display: none !important;
+  }
+}

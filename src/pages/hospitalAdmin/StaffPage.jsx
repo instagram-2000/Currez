@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { subscribeUsersByHospital, setUserStatus } from "../../firebase/users";
+import { subscribeUsersByHospital, setUserStatus, setUserBillingAccess } from "../../firebase/users";
 import { resetPassword } from "../../firebase/auth";
+import { useFeature } from "../../hooks/useFeature";
 import {
   CREATABLE_STAFF_ROLES_BY_HOSPITAL_ADMIN,
   ROLES,
@@ -15,6 +16,7 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import NavIcon from "../../components/common/NavIcon";
 
 function StaffPage({ tenantSlug }) {
+  const { enabled: billingEnabled } = useFeature("billing");
   const [staff, setStaff] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCredentials, setNewCredentials] = useState(null);
@@ -135,6 +137,26 @@ function StaffPage({ tenantSlug }) {
                         className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
                       >
                         Schedule
+                      </button>
+                    )}
+                    {billingEnabled && member.role === ROLES.RECEPTIONIST && (
+                      <button
+                        onClick={() => {
+                          const currentlyOff = member.billingAccess === false;
+                          setUserBillingAccess(member.uid, currentlyOff);
+                        }}
+                        title={
+                          member.billingAccess === false
+                            ? "This receptionist cannot create invoices or record payments"
+                            : "This receptionist can create invoices and record payments"
+                        }
+                        className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                          member.billingAccess === false
+                            ? "text-muted hover:bg-card-strong hover:text-heading"
+                            : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+                        }`}
+                      >
+                        Billing: {member.billingAccess === false ? "Off" : "On"}
                       </button>
                     )}
                     <button

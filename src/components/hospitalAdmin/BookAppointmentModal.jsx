@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { createAppointment } from '../../firebase/appointments'
 import { createPatient } from '../../firebase/patients'
+import { autoCreateConsultationInvoice } from '../../firebase/billing'
 import { useAuth } from '../../contexts/AuthContext'
+import { useFeature } from '../../hooks/useFeature'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
 import { DAY_LABELS, weekdayKeyForDate, availableSlotsForDate } from '../../utils/doctorSchedule'
@@ -20,6 +22,7 @@ const labelClass = 'block text-sm font-medium text-body'
 // form can't do this (no query access), but staff already have the data.
 function BookAppointmentModal({ hospitalId, patients, doctors, appointments = [], preselectedPatientId, onCreated, onCancel }) {
   const { user } = useAuth()
+  const { enabled: billingEnabled } = useFeature('billing')
   const [isNewPatient, setIsNewPatient] = useState(false)
   const [patientId, setPatientId] = useState(preselectedPatientId || patients[0]?.id || '')
   const [newPatientName, setNewPatientName] = useState('')
@@ -86,7 +89,7 @@ function BookAppointmentModal({ hospitalId, patients, doctors, appointments = []
         patientPhone = newPatientPhone.trim()
       }
 
-      await createAppointment(
+      const appointmentToken = await createAppointment(
         {
           hospitalId,
           patientId: finalPatientId,
@@ -103,6 +106,28 @@ function BookAppointmentModal({ hospitalId, patients, doctors, appointments = []
         },
         user.uid
       )
+
+      // Booked straight to a doctor (not left pending) — this is already
+      // the "confirmed" moment for this appointment, so start its invoice
+      // now rather than waiting for a separate confirm step that won't
+      // happen. Best-effort, never blocks — see the function's own comment.
+      if (doctorId) {
+        await autoCreateConsultationInvoice({
+          billingEnabled,
+          hospitalId,
+          appointmentId: appointmentToken,
+          patientId: finalPatientId,
+          patientName,
+          patientPhone,
+          doctorId,
+          doctorName: selectedDoctor?.displayName,
+          date,
+          time,
+          consultationFee: selectedDoctor?.consultationFee,
+          createdBy: user.uid,
+        })
+      }
+
       onCreated()
     } catch (err) {
       setError(err.message)
