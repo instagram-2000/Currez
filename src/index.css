@@ -146,43 +146,6 @@ body {
    (src/components/common/PrintPortal.jsx) has rendered as a sibling of
    #root — see that file for why a portal, not a visibility trick scoped to
    an element inside the modal, is what actually works here. */
-@keyframes hero-zoom {
-  from { transform: scale(1); }
-  to   { transform: scale(1.08); }
-}
-
-.hero-bg-zoom {
-  animation: hero-zoom 25s ease-in-out alternate infinite;
-}
-
-@keyframes hero-glow-pulse {
-  0%, 100% { opacity: 0.20; }
-  50%      { opacity: 0.35; }
-}
-
-.hero-glow-pulse {
-  animation: hero-glow-pulse 5s ease-in-out infinite;
-}
-
-@keyframes hero-shine {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.hero-trust-shine {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 45%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.08) 55%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: hero-shine 4s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
 @media print {
   #root {
     display: none !important;

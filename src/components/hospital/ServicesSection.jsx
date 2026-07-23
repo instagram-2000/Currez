@@ -10,10 +10,6 @@ function ServicesSection({ data }) {
 
   return (
     <section id="services" className={`relative overflow-hidden py-20 ${SITE_CONTAINER}`}>
-      <div
-        className="pointer-events-none absolute top-0 right-0 h-72 w-72 -translate-y-1/3 translate-x-1/3 rounded-full opacity-10 blur-3xl"
-        style={{ background: 'radial-gradient(circle, var(--tenant-primary, #6366f1), transparent 70%)' }}
-      />
       <Reveal className="relative">
         <SectionEyebrow>{t('hospital.navServices')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.ourServices')}</h2>
