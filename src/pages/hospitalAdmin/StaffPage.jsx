@@ -12,6 +12,7 @@ import StaffFormModal from "../../components/superadmin/StaffFormModal";
 import CredentialsDialog from "../../components/superadmin/CredentialsDialog";
 import StatusBadge from "../../components/superadmin/StatusBadge";
 import DoctorScheduleEditor from "../../components/hospitalAdmin/DoctorScheduleEditor";
+import StaffPermissionsModal from "../../components/hospitalAdmin/StaffPermissionsModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import NavIcon from "../../components/common/NavIcon";
 
@@ -21,6 +22,7 @@ function StaffPage({ tenantSlug }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCredentials, setNewCredentials] = useState(null);
   const [scheduleDoctor, setScheduleDoctor] = useState(null);
+  const [permissionsMember, setPermissionsMember] = useState(null);
   const [resetSentFor, setResetSentFor] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -66,6 +68,12 @@ function StaffPage({ tenantSlug }) {
             Schedule
           </button>
         )}
+        <button
+          onClick={() => setPermissionsMember(member)}
+          className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300"
+        >
+          Permissions
+        </button>
         {billingEnabled && member.role === ROLES.RECEPTIONIST && (
           <button
             onClick={() => {
@@ -280,6 +288,13 @@ function StaffPage({ tenantSlug }) {
         <DoctorScheduleEditor
           doctor={scheduleDoctor}
           onClose={() => setScheduleDoctor(null)}
+        />
+      )}
+
+      {permissionsMember && (
+        <StaffPermissionsModal
+          member={permissionsMember}
+          onClose={() => setPermissionsMember(null)}
         />
       )}
 

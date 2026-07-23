@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
 const LIVE_TOKENS = [
-  { code: 'A-042', hospital: "St. Xavier's Multispecialty", detail: 'Dr. Mehta · OPD 3', slug: 'stxaviers' },
-  { code: 'B-017', hospital: "Sunrise Children's Hospital", detail: 'Dr. Iyer · OPD 1', slug: 'sunrise' },
-  { code: 'A-118', hospital: 'Lakeview General Hospital', detail: 'Dr. Nair · OPD 2', slug: 'lakeview' },
+  { code: 'APT-BK42-NP7R', hospital: "St. Xavier's Multispecialty", detail: 'Dr. Mehta · OPD 3', slug: 'stxaviers' },
+  { code: 'APT-M2X8-QH5V', hospital: "Sunrise Children's Hospital", detail: 'Dr. Iyer · OPD 1', slug: 'sunrise' },
+  { code: 'APT-R9WN-4KJ6', hospital: 'Lakeview General Hospital', detail: 'Dr. Nair · OPD 2', slug: 'lakeview' },
 ]
 
 // Hero signature piece, styled after the physical queue-token slip a
@@ -34,7 +34,7 @@ function TokenChit() {
         Live token
       </p>
 
-      <p className="mt-4 font-plex-mono text-6xl font-semibold tabular-nums">{token.code}</p>
+      <p className="mt-4 font-plex-mono text-5xl font-semibold tracking-wider tabular-nums">{token.code}</p>
 
       <div className="mt-5 border-t border-dashed border-paper-line pt-4">
         <p className="font-plex text-sm font-semibold">{token.hospital}</p>

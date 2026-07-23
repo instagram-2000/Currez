@@ -1,14 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLanguage } from '../../contexts/LanguageContext'
 import LanguageSwitcher from '../common/LanguageSwitcher'
 import ThemeToggle from '../common/ThemeToggle'
 import { SITE_CONTAINER } from '../../utils/layout'
 
-const SECTION_NAV = [
+// Primary links shown directly in the desktop nav bar — keep this short
+// so the header never feels crowded. Everything else lives in the "More"
+// dropdown or the mobile hamburger menu.
+const PRIMARY_NAV = [
   { key: 'services', href: '#services', labelKey: 'hospital.navServices' },
-  { key: 'departments', href: '#departments', labelKey: 'hospital.navDepartments' },
   { key: 'doctors', href: '#doctors', labelKey: 'hospital.navDoctors' },
+  { key: 'contact', href: '#contact', labelKey: 'hospital.navContact' },
+]
+
+// Secondary links tucked behind the "More" dropdown on desktop and shown
+// in the mobile menu alongside the primary ones.
+const SECONDARY_NAV = [
+  { key: 'departments', href: '#departments', labelKey: 'hospital.navDepartments' },
   { key: 'testimonials', href: '#testimonials', labelKey: 'hospital.navTestimonials' },
 ]
 
@@ -17,15 +26,32 @@ function Header({ config, onBookClick, onStatusClick }) {
   const location = useLocation()
   const { t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreRef = useRef(null)
 
-  const navLinks = [
-    ...SECTION_NAV.filter((item) => optionals?.[item.key]?.enabled === 'on'),
-    { key: 'contact', href: '#contact', labelKey: 'hospital.navContact' },
-  ].map((item) => ({ ...item, label: t(item.labelKey) }))
+  // Build visible nav lists — only show sections the hospital has enabled.
+  const primaryLinks = PRIMARY_NAV
+    .filter((item) => item.key === 'contact' || optionals?.[item.key]?.enabled === 'on')
+    .map((item) => ({ ...item, label: t(item.labelKey) }))
+
+  const secondaryLinks = SECONDARY_NAV
+    .filter((item) => optionals?.[item.key]?.enabled === 'on')
+    .map((item) => ({ ...item, label: t(item.labelKey) }))
+
+  const hasMore = secondaryLinks.length > 0
+
+  // Close the "More" dropdown when clicking outside.
+  useEffect(() => {
+    if (!moreOpen) return
+    function handleClick(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [moreOpen])
 
   // Lock background scroll while the mobile menu is open, and let Escape
-  // close it — same interaction contract as the site's Modal component, so
-  // the mobile nav doesn't feel like a second-class citizen next to it.
+  // close it — same interaction contract as the site's Modal component.
   useEffect(() => {
     if (!menuOpen) return
     const previousOverflow = document.body.style.overflow
@@ -43,6 +69,7 @@ function Header({ config, onBookClick, onStatusClick }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-lg backdrop-saturate-150">
       <div className={`flex items-center justify-between py-3.5 ${SITE_CONTAINER}`}>
+        {/* Left — logo + name */}
         <div className="flex min-w-0 items-center gap-3">
           {branding?.logos?.smallLogo ? (
             <img
@@ -61,23 +88,60 @@ function Header({ config, onBookClick, onStatusClick }) {
           <span className="truncate text-lg font-semibold text-heading">{title}</span>
         </div>
 
-        <nav className="hidden items-center gap-7 text-sm text-body lg:flex">
-          {navLinks.map((link) => (
+        {/* Center — primary nav links + More dropdown */}
+        <nav className="hidden items-center gap-6 text-sm text-body lg:flex">
+          {primaryLinks.map((link) => (
             <a key={link.key} href={link.href} className="transition-colors hover:text-heading">
               {link.label}
             </a>
           ))}
-          <button onClick={onStatusClick} className="cursor-pointer transition-colors hover:text-heading">
-            {t('hospital.checkAppointmentStatus')}
-          </button>
+          {hasMore && (
+            <div className="relative" ref={moreRef}>
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className="flex cursor-pointer items-center gap-1 transition-colors hover:text-heading"
+              >
+                {t('hospital.navMore') || 'More'}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`h-3.5 w-3.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {moreOpen && (
+                <div className="animate-fade-in-up absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+                  {secondaryLinks.map((link) => (
+                    <a
+                      key={link.key}
+                      href={link.href}
+                      onClick={() => setMoreOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-body transition-colors hover:bg-card-strong hover:text-heading"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                  <button
+                    onClick={() => { setMoreOpen(false); onStatusClick() }}
+                    className="block w-full px-4 py-2.5 text-left text-sm text-body transition-colors hover:bg-card-strong hover:text-heading"
+                  >
+                    {t('hospital.checkAppointmentStatus')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {!hasMore && (
+            <button onClick={onStatusClick} className="cursor-pointer transition-colors hover:text-heading">
+              {t('hospital.checkAppointmentStatus')}
+            </button>
+          )}
         </nav>
 
-        <div className="flex items-center gap-1 sm:gap-3">
+        {/* Right — CTA + utilities */}
+        <div className="flex items-center gap-1 sm:gap-2">
           <ThemeToggle />
           <LanguageSwitcher className="hidden sm:inline-flex" />
           <Link
             to={{ pathname: '/login', search: location.search }}
-            className="hidden text-sm text-muted hover:text-heading lg:inline-block"
+            className="hidden rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading lg:inline-block"
           >
             {t('hospital.staffLogin')}
           </Link>
@@ -105,17 +169,13 @@ function Header({ config, onBookClick, onStatusClick }) {
         </div>
       </div>
 
-      {/* Mobile nav panel — CTA leads (the thing most patients open this
-          menu to do), links follow. Body scroll is locked while open (see
-          the effect above) so the panel reads as a real overlay, not just
-          content pushing the page down. */}
+      {/* Mobile nav panel — CTA leads, links follow. Body scroll is locked
+          while open (see the effect above) so the panel reads as a real
+          overlay, not just content pushing the page down. */}
       {menuOpen && (
         <div className="animate-fade-in-up border-t border-line bg-surface px-6 py-5 lg:hidden">
           <button
-            onClick={() => {
-              setMenuOpen(false)
-              onBookClick()
-            }}
+            onClick={() => { setMenuOpen(false); onBookClick() }}
             className="block w-full cursor-pointer rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5"
             style={{ backgroundColor: 'var(--tenant-primary)' }}
           >
@@ -123,7 +183,17 @@ function Header({ config, onBookClick, onStatusClick }) {
           </button>
 
           <nav className="mt-5 flex flex-col divide-y divide-line text-sm text-body">
-            {navLinks.map((link) => (
+            {primaryLinks.map((link) => (
+              <a
+                key={link.key}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+                className="py-3 transition-colors hover:text-heading"
+              >
+                {link.label}
+              </a>
+            ))}
+            {secondaryLinks.map((link) => (
               <a
                 key={link.key}
                 href={link.href}
@@ -134,10 +204,7 @@ function Header({ config, onBookClick, onStatusClick }) {
               </a>
             ))}
             <button
-              onClick={() => {
-                setMenuOpen(false)
-                onStatusClick()
-              }}
+              onClick={() => { setMenuOpen(false); onStatusClick() }}
               className="cursor-pointer py-3 text-left transition-colors hover:text-heading"
             >
               {t('hospital.checkAppointmentStatus')}

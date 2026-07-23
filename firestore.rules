@@ -350,6 +350,31 @@ service cloud.firestore {
       allow update, delete: if isSuperAdmin();
     }
 
+    // Bed & Ward Management module — bedConfig stores the floor/ward/room/bed
+    // hierarchy for each hospital (one doc per hospital, id == hospitalId),
+    // admissions stores individual admission records. Both are feature-gated
+    // on the 'bedManagement' key.
+    match /bedConfig/{hospitalId} {
+      allow get: if isHospitalStaffOf(hospitalId) &&
+        hospitalHasFeature(hospitalId, 'bedManagement');
+      allow list: if false;
+      allow create, update: if isHospitalAdminOf(hospitalId) &&
+        hospitalHasFeature(hospitalId, 'bedManagement');
+      allow delete: if false;
+    }
+
+    match /admissions/{admissionId} {
+      allow read: if isHospitalStaffOf(resource.data.hospitalId) &&
+        hospitalHasFeature(resource.data.hospitalId, 'bedManagement');
+      allow list: if isHospitalStaffOf(resource.data.hospitalId) &&
+        hospitalHasFeature(resource.data.hospitalId, 'bedManagement');
+      allow create: if isHospitalStaffOf(request.resource.data.hospitalId) &&
+        hospitalHasFeature(request.resource.data.hospitalId, 'bedManagement');
+      allow update: if isHospitalStaffOf(resource.data.hospitalId) &&
+        hospitalHasFeature(resource.data.hospitalId, 'bedManagement');
+      allow delete: if false;
+    }
+
     // Prescriptions module (src/config/featureRegistry.js key
     // 'prescriptions') deliberately has NO collection/rule of its own — it
     // only presents data that already lives on `appointments` (the

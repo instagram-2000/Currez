@@ -42,6 +42,7 @@ const DoctorProfileEditor = lazy(() => import('./pages/hospitalAdmin/DoctorProfi
 const BillingPage = lazy(() => import('./pages/hospitalAdmin/BillingPage'))
 const PrescriptionsPage = lazy(() => import('./pages/hospitalAdmin/PrescriptionsPage'))
 const ChatbotPage = lazy(() => import('./pages/hospitalAdmin/ChatbotPage'))
+const BedManagementPage = lazy(() => import('./pages/hospitalAdmin/BedManagementPage'))
 const AnalyticsPage = lazy(() => import('./pages/hospitalAdmin/AnalyticsPage'))
 const SuperAdminAnalyticsPage = lazy(() => import('./pages/superadmin/SuperAdminAnalyticsPage'))
 
@@ -172,6 +173,14 @@ function App() {
                         <Route element={<RequirePermission moduleKey="prescriptions" />}>
                           <Route path="prescriptions" element={<PrescriptionsPage tenantSlug={tenantSlug} />} />
                         </Route>
+                      </Route>
+                    </Route>
+
+                    {/* Hospital admin + receptionist, and only if the Super
+                        Admin has enabled Bed Management for this hospital */}
+                    <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST]} />}>
+                      <Route element={<RequireFeature featureKey="bedManagement" />}>
+                        <Route path="beds" element={<BedManagementPage tenantSlug={tenantSlug} />} />
                       </Route>
                     </Route>
 

@@ -36,15 +36,26 @@ function HeroSection({ config, doctorCount, onBookClick, onStatusClick }) {
     <section
       className="relative overflow-hidden pt-16 pb-24 md:pt-24 md:pb-32"
       style={{
-        backgroundImage: bgImage ? `url(${bgImage})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        // The hero banner always stays on the hospital's brand-dark color
-        // (with white text) regardless of the app-wide light/dark toggle —
-        // that toggle governs the page around it, not the brand banner.
-        backgroundColor: bgImage ? undefined : 'var(--tenant-secondary, #0f172a)',
+        // Hero banner always stays on the hospital's brand-dark color
+        // (with white text) regardless of the app-wide light/dark toggle.
+        backgroundColor: 'var(--tenant-secondary, #0f172a)',
       }}
     >
+      {/* Masked background image — fades to transparent at the bottom so it
+          dissolves into the next section instead of hard-cutting. */}
+      {bgImage && (
+        <div
+          className="absolute inset-0 -z-[1]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${bgImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+          }}
+        />
+      )}
       {/* Always-on gradient wash: keeps hero text readable over any photo,
           and gives hospitals with no configured image a designed look
           instead of a flat color fill. */}

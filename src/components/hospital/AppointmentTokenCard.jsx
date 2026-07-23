@@ -22,7 +22,7 @@ function AppointmentTokenCard({ token, hospitalName, doctorName, date }) {
         {t('booking.yourToken')}
       </p>
       <p
-        className="mt-2 font-mono text-4xl font-bold tracking-widest"
+        className="mt-2 font-mono text-3xl font-bold tracking-widest"
         style={{ color: 'var(--tenant-primary, #6366f1)' }}
       >
         {token}

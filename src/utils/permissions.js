@@ -24,6 +24,8 @@ export const PERMISSION_MODULES = [
   { key: 'billing', label: 'Billing' },
   { key: 'prescriptions', label: 'Prescriptions' },
   { key: 'chatbot', label: 'Chatbot' },
+  { key: 'bedManagement', label: 'Beds & Wards' },
+  { key: 'analytics', label: 'Analytics' },
 ]
 
 // A Hospital Admin or Super Admin always has full access — permission

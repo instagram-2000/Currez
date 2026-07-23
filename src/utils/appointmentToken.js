@@ -2,8 +2,12 @@
 // off a screen and repeat it back at the front desk.
 const CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 
-export function generateToken(length = 7) {
-  const bytes = new Uint32Array(length)
+// Generates a human-readable appointment token in APT-XXXX-XXXX format.
+// The prefix makes it immediately clear what the code is for, and the
+// grouped characters are easier to read aloud at the front desk.
+export function generateToken() {
+  const bytes = new Uint32Array(8)
   crypto.getRandomValues(bytes)
-  return Array.from(bytes, (byte) => CHARS[byte % CHARS.length]).join('')
+  const chars = Array.from(bytes, (byte) => CHARS[byte % CHARS.length])
+  return `APT-${chars.slice(0, 4).join('')}-${chars.slice(4, 8).join('')}`
 }

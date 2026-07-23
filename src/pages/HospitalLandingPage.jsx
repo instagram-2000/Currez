@@ -8,7 +8,6 @@ import TenantNotFound from './TenantNotFound'
 import EmergencyBar from '../components/hospital/EmergencyBar'
 import Header from '../components/hospital/Header'
 import HeroSection from '../components/hospital/HeroSection'
-import StatsBand from '../components/hospital/StatsBand'
 import SectionRenderer from '../components/hospital/SectionRenderer'
 import ContactSection from '../components/hospital/ContactSection'
 import BookAppointmentSection from '../components/hospital/BookAppointmentSection'
@@ -83,7 +82,6 @@ function HospitalLandingPage({ slug }) {
         onBookClick={() => setActiveModal('book')}
         onStatusClick={() => setActiveModal('status')}
       />
-      <StatsBand config={config} doctorCount={doctors.length} />
       <SectionRenderer optionals={config.optionals} doctors={doctors} slug={slug} />
       <ContactSection config={config} />
       <BookAppointmentSection config={config} />

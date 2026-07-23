@@ -135,6 +135,17 @@ export const FEATURE_REGISTRY = [
     isCore: false,
     defaultEnabled: false,
   },
+  {
+    key: 'bedManagement',
+    label: 'Beds & Wards',
+    description: 'Manage hospital beds, wards, rooms and inpatient admissions.',
+    icon: 'bed',
+    path: 'beds',
+    allowedRoles: [ROLES.HOSPITAL_ADMIN, ROLES.RECEPTIONIST],
+    category: FEATURE_CATEGORIES.OPERATIONS,
+    isCore: false,
+    defaultEnabled: false,
+  },
 ]
 
 export function getFeatureDefinition(key) {
