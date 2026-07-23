@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Covers the root marketing domain (www.currez.in) only. This is one static
-  file served by the same build to every hospital subdomain too (there's no
-  per-host server rendering in this app), but a sitemap's URLs must share
-  its own host — so this file can only be valid for whichever host actually
-  matches the URLs below. Per-hospital subdomains need their own
-  dynamically-generated sitemap (e.g. a small serverless function reading
-  the Host header) to be correctly indexed this way; see robots.txt for the
-  crawl rules that already apply everywhere regardless.
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.currez.in/</loc>
