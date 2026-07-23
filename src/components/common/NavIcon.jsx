@@ -29,6 +29,7 @@ const PATHS = {
   profile: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   billing: 'M7 3h10a1 1 0 0 1 1 1v16l-2-1-2 1-2-1-2 1-2-1-2 1V4a1 1 0 0 1 1-1z M9 8h6M9 12h6M9 16h3',
   prescription: 'M4.93 19.07a5 5 0 0 1 0-7.07l7.07-7.07a5 5 0 0 1 7.07 7.07l-7.07 7.07a5 5 0 0 1-7.07 0z M9 9l6 6',
+  analytics: 'M3 3v18h18 M7 16l4-6 4 4 4-8',
 }
 
 function NavIcon({ name, className = 'h-4.5 w-4.5' }) {

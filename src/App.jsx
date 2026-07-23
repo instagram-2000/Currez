@@ -42,6 +42,8 @@ const DoctorProfileEditor = lazy(() => import('./pages/hospitalAdmin/DoctorProfi
 const BillingPage = lazy(() => import('./pages/hospitalAdmin/BillingPage'))
 const PrescriptionsPage = lazy(() => import('./pages/hospitalAdmin/PrescriptionsPage'))
 const ChatbotPage = lazy(() => import('./pages/hospitalAdmin/ChatbotPage'))
+const AnalyticsPage = lazy(() => import('./pages/hospitalAdmin/AnalyticsPage'))
+const SuperAdminAnalyticsPage = lazy(() => import('./pages/superadmin/SuperAdminAnalyticsPage'))
 
 function App() {
   const tenantSlug = useMemo(() => getTenantSlug(), [])
@@ -68,8 +70,9 @@ function App() {
         >
           <Route index element={<SuperAdminLoginPage />} />
           <Route element={<RequireSuperAdmin />}>
-            <Route element={<SuperAdminLayout />}>
+              <Route element={<SuperAdminLayout />}>
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="analytics" element={<SuperAdminAnalyticsPage />} />
               <Route path="hospitals" element={<HospitalsListPage />} />
               <Route path="hospitals/new" element={<HospitalFormPage mode="create" />} />
               <Route path="hospitals/:slug" element={<HospitalDetailPage />} />
@@ -169,6 +172,14 @@ function App() {
                         <Route element={<RequirePermission moduleKey="prescriptions" />}>
                           <Route path="prescriptions" element={<PrescriptionsPage tenantSlug={tenantSlug} />} />
                         </Route>
+                      </Route>
+                    </Route>
+
+                    {/* Hospital admin only, and only if the Super Admin
+                        has enabled Analytics for this hospital */}
+                    <Route element={<RequireRole allowedRoles={[ROLES.HOSPITAL_ADMIN]} />}>
+                      <Route element={<RequireFeature featureKey="analytics" />}>
+                        <Route path="analytics" element={<AnalyticsPage />} />
                       </Route>
                     </Route>
                   </Route>

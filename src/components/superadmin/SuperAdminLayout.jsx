@@ -8,6 +8,7 @@ import MobileNavDrawer from "../common/MobileNavDrawer";
 
 const NAV_ITEMS = [
   { to: "/superadmin/dashboard", label: "Dashboard", icon: "dashboard" },
+  { to: "/superadmin/analytics", label: "Analytics", icon: "analytics" },
   { to: "/superadmin/hospitals", label: "Hospitals", icon: "hospitals" },
 ];
 

@@ -124,6 +124,17 @@ export const FEATURE_REGISTRY = [
     isCore: false,
     defaultEnabled: false,
   },
+  {
+    key: 'analytics',
+    label: 'Analytics',
+    description: 'Revenue reports, appointment trends, doctor performance and operational insights.',
+    icon: 'analytics',
+    path: 'analytics',
+    allowedRoles: [ROLES.HOSPITAL_ADMIN],
+    category: FEATURE_CATEGORIES.OPERATIONS,
+    isCore: false,
+    defaultEnabled: false,
+  },
 ]
 
 export function getFeatureDefinition(key) {
