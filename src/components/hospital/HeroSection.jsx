@@ -36,26 +36,12 @@ function HeroSection({ config, doctorCount, onBookClick, onStatusClick }) {
     <section
       className="relative overflow-hidden pt-16 pb-24 md:pt-24 md:pb-32"
       style={{
-        // Hero banner always stays on the hospital's brand-dark color
-        // (with white text) regardless of the app-wide light/dark toggle.
-        backgroundColor: 'var(--tenant-secondary, #0f172a)',
+        backgroundImage: bgImage ? `url(${bgImage})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: bgImage ? undefined : 'var(--tenant-secondary, #0f172a)',
       }}
     >
-      {/* Masked background image — fades to transparent at the bottom so it
-          dissolves into the next section instead of hard-cutting. */}
-      {bgImage && (
-        <div
-          className="absolute inset-0 -z-[1]"
-          aria-hidden="true"
-          style={{
-            backgroundImage: `url(${bgImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-            maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-          }}
-        />
-      )}
       {/* Always-on gradient wash: keeps hero text readable over any photo,
           and gives hospitals with no configured image a designed look
           instead of a flat color fill. */}
@@ -67,6 +53,17 @@ function HeroSection({ config, doctorCount, onBookClick, onStatusClick }) {
             : `radial-gradient(ellipse 80% 60% at 20% 0%, color-mix(in srgb, var(--tenant-primary) 28%, transparent), transparent), linear-gradient(180deg, transparent, rgba(0,0,0,0.35))`,
         }}
       />
+      {/* Bottom fade overlay — blends the hero image into the next section
+          by painting a gradient from transparent to the hero's dark base. */}
+      {bgImage && (
+        <div
+          className="absolute inset-x-0 bottom-0 h-1/3"
+          aria-hidden="true"
+          style={{
+            background: 'linear-gradient(to top, var(--tenant-secondary, #0f172a), transparent)',
+          }}
+        />
+      )}
       {/* Soft decorative glow, purely a wide-screen accent — echoes the
           same blurred-blob treatment used in the staff dashboard shell so
           the whole product feels like one design system. */}
