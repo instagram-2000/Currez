@@ -59,18 +59,29 @@ service cloud.firestore {
     }
 
     // Whether this staff member may operate Billing for their own hospital.
-    // Hospital Admin always can; a Receptionist can unless a Hospital Admin
-    // has explicitly turned it off for them (see setUserBillingAccess in
-    // firebase/users.js) — get(field, true) defaults to allowed when the
-    // field is missing, so every receptionist that existed before this flag
-    // was added keeps working exactly as before; only an explicit `false`
-    // takes access away.
+    // Hospital Admin always can; a Receptionist can unless access has been
+    // turned off for them via EITHER of two fields on their own user doc —
+    // the original per-hospital-admin `billingAccess` boolean toggle (see
+    // setUserBillingAccess in firebase/users.js), or the newer, more
+    // general Super-Admin-assigned `permissions.billing` level (see
+    // setUserModulePermission and src/utils/permissions.js). Both default
+    // to "allowed" when missing (get(field, true) / != 'none'), so every
+    // receptionist that existed before either field was added keeps working
+    // exactly as before; either field explicitly denying access takes it
+    // away. setUserBillingAccess/setUserModulePermission always write both
+    // fields together going forward, so they can only disagree on a
+    // receptionist whose `billingAccess` was set to false before the
+    // `permissions` map existed and hasn't been touched since — in that one
+    // historical case, access stays denied until either field is touched
+    // again.
     function isBillingStaffOf(hospitalId) {
       return hasUserDoc() &&
         currentUserDoc().status == 'active' &&
         currentUserDoc().hospitalId == hospitalId &&
         (currentUserDoc().role == 'HOSPITAL_ADMIN' ||
-         (currentUserDoc().role == 'RECEPTIONIST' && currentUserDoc().get('billingAccess', true) == true)) &&
+         (currentUserDoc().role == 'RECEPTIONIST' &&
+          currentUserDoc().get('billingAccess', true) == true &&
+          currentUserDoc().get('permissions', {}).get('billing', 'edit') != 'none')) &&
         hospitalHasFeature(hospitalId, 'billing');
     }
 
@@ -250,8 +261,17 @@ service cloud.firestore {
       // edit in alongside a status change:
       //   1) add a charge (room, dressing, tests, ...) — only while still
       //      'due', lineItems/subtotal only ever grow, identity fixed;
-      //   2) record payment — due -> paid, every money/identity field
-      //      frozen exactly as it was;
+      //   2) record a payment, full or partial — `amountPaid` may only
+      //      increase (never past `total`), status flips to 'paid' only
+      //      once it reaches `total` and otherwise must stay 'due'; every
+      //      other money/identity field frozen exactly as it was. The
+      //      per-payment history (who paid what, when) lives in the
+      //      separate /invoicePayments collection below, not as an array
+      //      on this doc — Firestore doesn't support serverTimestamp()
+      //      inside array elements, and keeping `amountPaid` flat here
+      //      (rather than derived from summing that collection) means every
+      //      page that already reads invoices for stats/lists still needs
+      //      zero extra queries to know what's outstanding.
       //   3) void — Hospital Admin only, from any non-void status, every
       //      money/identity field frozen exactly as it was.
       allow update: if
@@ -271,13 +291,17 @@ service cloud.firestore {
         (
           isBillingStaffOf(resource.data.hospitalId) &&
           resource.data.status == 'due' &&
-          request.resource.data.status == 'paid' &&
           request.resource.data.hospitalId == resource.data.hospitalId &&
           request.resource.data.appointmentId == resource.data.appointmentId &&
           request.resource.data.lineItems == resource.data.lineItems &&
           request.resource.data.subtotal == resource.data.subtotal &&
           request.resource.data.discount == resource.data.discount &&
-          request.resource.data.total == resource.data.total
+          request.resource.data.total == resource.data.total &&
+          request.resource.data.amountPaid is number &&
+          request.resource.data.amountPaid > resource.data.get('amountPaid', 0) &&
+          request.resource.data.amountPaid <= resource.data.total &&
+          request.resource.data.status ==
+            (request.resource.data.amountPaid >= resource.data.total ? 'paid' : 'due')
         ) ||
         (
           isHospitalAdminOf(resource.data.hospitalId) &&
@@ -294,6 +318,36 @@ service cloud.firestore {
         isSuperAdmin();
 
       allow delete: if isSuperAdmin();
+    }
+
+    // Sequential, human-readable invoice numbers (see createInvoice in
+    // src/firebase/billing.js) — doc id == hospitalId, same atomic-counter
+    // pattern as phoneDailyCounts above: a create must start at count 1, and
+    // each update must increment by exactly 1, so two concurrent invoice
+    // creations for the same hospital can never collide on the same number.
+    match /invoiceCounters/{hospitalId} {
+      allow get: if isSuperAdmin() || isHospitalStaffOf(hospitalId);
+      allow create: if isBillingStaffOf(hospitalId) && request.resource.data.count == 1;
+      allow update: if isBillingStaffOf(hospitalId) &&
+        request.resource.data.count == resource.data.count + 1;
+      allow delete: if isSuperAdmin();
+    }
+
+    // Payment history for invoices — one doc per (possibly partial) payment.
+    // Kept as its own collection instead of an array field on the invoice
+    // itself because Firestore doesn't support serverTimestamp() inside
+    // array elements; see the comment on the /invoices update rule above for
+    // why `amountPaid` (the number every stats/list view actually needs)
+    // still lives flat on the invoice doc rather than being derived by
+    // summing these. This collection is purely for the "payment history"
+    // list in InvoiceDetailModal — nothing else reads it.
+    match /invoicePayments/{paymentId} {
+      allow get: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow list: if isSuperAdmin() || isHospitalStaffOf(resource.data.hospitalId);
+      allow create: if isBillingStaffOf(request.resource.data.hospitalId) &&
+        request.resource.data.invoiceId is string &&
+        request.resource.data.amount is number && request.resource.data.amount > 0;
+      allow update, delete: if isSuperAdmin();
     }
 
     // Prescriptions module (src/config/featureRegistry.js key

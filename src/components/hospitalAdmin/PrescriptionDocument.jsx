@@ -13,19 +13,31 @@ function formatTimestamp(ts) {
 function PrescriptionContent({ appointment, hospital, doctor }) {
   const prescription = appointment.prescription || []
   const tests = appointment.tests || []
+  const logo = hospital?.branding?.logos?.smallLogo
+  const accent = hospital?.branding?.primaryColor || '#4f46e5'
+  const reference = appointment.token || appointment.id
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 border-b border-line pb-4">
-        <div>
-          <h2 className="text-lg font-bold text-heading">{hospital?.title || 'Hospital'}</h2>
-          {hospital?.footer?.address && <p className="mt-0.5 text-xs text-muted">{hospital.footer.address}</p>}
-          <p className="text-xs text-muted">
-            {[hospital?.footer?.phone, hospital?.footer?.email].filter(Boolean).join(' · ')}
-          </p>
+      <div
+        className="flex items-start justify-between gap-4 border-b-2 pb-4"
+        style={{ borderColor: 'color-mix(in srgb, ' + accent + ' 30%, transparent)' }}
+      >
+        <div className="flex items-start gap-3">
+          {logo && (
+            <img src={logo} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-line" />
+          )}
+          <div>
+            <h2 className="text-lg font-bold text-heading">{hospital?.title || 'Hospital'}</h2>
+            {hospital?.footer?.address && <p className="mt-0.5 text-xs text-muted">{hospital.footer.address}</p>}
+            <p className="text-xs text-muted">
+              {[hospital?.footer?.phone, hospital?.footer?.email].filter(Boolean).join(' · ')}
+            </p>
+          </div>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <p className="text-xs font-semibold tracking-widest text-faint uppercase">Prescription</p>
+          {reference && <p className="mt-0.5 font-mono text-xs font-semibold text-heading">Rx-{reference}</p>}
           <p className="mt-1 text-xs text-muted">
             {appointment.date}
             {appointment.time ? ` · ${appointment.time}` : ''}
@@ -33,7 +45,7 @@ function PrescriptionContent({ appointment, hospital, doctor }) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+      <div className="mt-4 grid grid-cols-2 gap-4 rounded-xl border border-line bg-card-strong/50 p-4 text-sm">
         <div>
           <p className="text-xs text-faint">Patient</p>
           <p className="font-medium text-heading">{appointment.patientName || '—'}</p>
@@ -62,6 +74,7 @@ function PrescriptionContent({ appointment, hospital, doctor }) {
             <table className="min-w-full divide-y divide-line text-sm">
               <thead>
                 <tr className="bg-card-strong/50 text-left text-xs font-semibold tracking-wide text-faint uppercase">
+                  <th className="px-3 py-2 w-8">#</th>
                   <th className="px-3 py-2">Medicine</th>
                   <th className="px-3 py-2">Dosage</th>
                   <th className="px-3 py-2">Duration</th>
@@ -70,6 +83,7 @@ function PrescriptionContent({ appointment, hospital, doctor }) {
               <tbody className="divide-y divide-line">
                 {prescription.map((row, i) => (
                   <tr key={i}>
+                    <td className="px-3 py-2 text-faint">{i + 1}</td>
                     <td className="px-3 py-2 font-medium text-heading">{row.medicine}</td>
                     <td className="px-3 py-2 text-body">{row.dosage || '—'}</td>
                     <td className="px-3 py-2 text-body">{row.duration || '—'}</td>
@@ -96,13 +110,15 @@ function PrescriptionContent({ appointment, hospital, doctor }) {
       )}
 
       <div className="mt-8 flex items-end justify-between border-t border-line pt-4">
-        <p className="text-[10px] text-faint">
+        <p className="max-w-xs text-[10px] leading-relaxed text-faint">
           Generated via Currez on {formatTimestamp(appointment.consultedAt) || 'this visit'}. Not a substitute for
           the original signed prescription.
         </p>
         <div className="text-center">
           <div className="h-8 w-32 border-b border-line-strong" />
-          <p className="mt-1 text-[10px] text-faint">Doctor's signature</p>
+          <p className="mt-1 text-[10px] text-faint">
+            {appointment.doctorName ? `Dr. ${appointment.doctorName.replace(/^dr\.?\s*/i, '')}` : "Doctor's signature"}
+          </p>
         </div>
       </div>
     </div>

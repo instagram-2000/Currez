@@ -1,13 +1,29 @@
-import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  runTransaction,
+  serverTimestamp,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore'
 import { db } from './config'
 
 const INVOICES_COLLECTION = 'invoices'
+const INVOICE_COUNTERS_COLLECTION = 'invoiceCounters'
+const INVOICE_PAYMENTS_COLLECTION = 'invoicePayments'
 
 export const INVOICE_STATUS = {
   DUE: 'due',
   PAID: 'paid',
   VOID: 'void',
 }
+
+// Common Indian GST slabs — a simple preset list for CreateInvoiceModal's
+// tax dropdown rather than a free-text rate field.
+export const TAX_RATE_OPTIONS = [0, 5, 12, 18]
 
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100
@@ -19,6 +35,19 @@ export function subscribeInvoices(hospitalId, callback) {
     const invoices = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
     invoices.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
     callback(invoices)
+  })
+}
+
+// Payment history for one invoice — only ever subscribed on-demand while
+// InvoiceDetailModal is open for that specific invoice, not as a page-wide
+// listener (see the comment on the /invoices update rule in firestore.rules
+// for why this is a separate collection rather than a field on the invoice).
+export function subscribeInvoicePayments(invoiceId, callback) {
+  const q = query(collection(db, INVOICE_PAYMENTS_COLLECTION), where('invoiceId', '==', invoiceId))
+  return onSnapshot(q, (snapshot) => {
+    const payments = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+    payments.sort((a, b) => (a.paidAt?.toMillis?.() ?? 0) - (b.paidAt?.toMillis?.() ?? 0))
+    callback(payments)
   })
 }
 
@@ -37,7 +66,20 @@ export function subscribeInvoices(hospitalId, callback) {
 // friendlier prevention is still BillingPage only ever offering
 // not-yet-invoiced appointments in the picker.
 export async function createInvoice(
-  { hospitalId, appointmentId, patientId, patientName, patientPhone, doctorId, doctorName, date, time, lineItems, discount },
+  {
+    hospitalId,
+    appointmentId,
+    patientId,
+    patientName,
+    patientPhone,
+    doctorId,
+    doctorName,
+    date,
+    time,
+    lineItems,
+    discount,
+    taxRate,
+  },
   createdBy
 ) {
   if (!hospitalId || !appointmentId) {
@@ -51,7 +93,18 @@ export async function createInvoice(
     throw new Error('Add at least one line item with a label and an amount greater than 0.')
   }
 
-  const subtotal = round2(cleanItems.reduce((sum, item) => sum + item.amount, 0))
+  // Tax is modeled as its own line item (not a separate arithmetic term) so
+  // `subtotal` stays literally "sum of lineItems" — the exact invariant
+  // firestore.rules already enforces, meaning tax support needed zero rule
+  // changes. Computed on the pre-discount subtotal; a simplified choice
+  // appropriate for a small-hospital billing tool, not a full GST ledger.
+  const cleanTaxRate = Math.max(Number(taxRate) || 0, 0)
+  const preTaxSubtotal = round2(cleanItems.reduce((sum, item) => sum + item.amount, 0))
+  const taxAmount = cleanTaxRate > 0 ? round2(preTaxSubtotal * (cleanTaxRate / 100)) : 0
+  const allItems =
+    taxAmount > 0 ? [...cleanItems, { label: `GST (${cleanTaxRate}%)`, amount: taxAmount, isTax: true }] : cleanItems
+
+  const subtotal = round2(allItems.reduce((sum, item) => sum + item.amount, 0))
   const cleanDiscount = round2(Math.min(Math.max(Number(discount) || 0, 0), subtotal))
   // Deliberately NOT round2(subtotal - cleanDiscount) — the Firestore create
   // rule independently re-derives total as subtotal - discount from these
@@ -65,26 +118,38 @@ export async function createInvoice(
   const total = subtotal - cleanDiscount
 
   const ref = doc(db, INVOICES_COLLECTION, appointmentId)
+  const counterRef = doc(db, INVOICE_COUNTERS_COLLECTION, hospitalId)
 
-  await setDoc(ref, {
-    hospitalId,
-    appointmentId,
-    patientId: patientId || null,
-    patientName: patientName || '',
-    patientPhone: patientPhone || '',
-    doctorId: doctorId || null,
-    doctorName: doctorName || '',
-    date: date || '',
-    time: time || '',
-    lineItems: cleanItems,
-    subtotal,
-    discount: cleanDiscount,
-    total,
-    status: INVOICE_STATUS.DUE,
-    paymentMethod: null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    createdBy,
+  // Transactional so two invoices created back-to-back for the same
+  // hospital can never be assigned the same sequential number.
+  await runTransaction(db, async (transaction) => {
+    const counterSnap = await transaction.get(counterRef)
+    const nextNumber = (counterSnap.exists() ? counterSnap.data().count : 0) + 1
+
+    transaction.set(counterRef, { count: nextNumber, updatedAt: serverTimestamp() }, { merge: true })
+    transaction.set(ref, {
+      hospitalId,
+      appointmentId,
+      invoiceNumber: `INV-${String(nextNumber).padStart(6, '0')}`,
+      patientId: patientId || null,
+      patientName: patientName || '',
+      patientPhone: patientPhone || '',
+      doctorId: doctorId || null,
+      doctorName: doctorName || '',
+      date: date || '',
+      time: time || '',
+      lineItems: allItems,
+      subtotal,
+      discount: cleanDiscount,
+      total,
+      taxRate: cleanTaxRate,
+      amountPaid: 0,
+      status: INVOICE_STATUS.DUE,
+      paymentMethod: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdBy,
+    })
   })
 
   return appointmentId
@@ -165,18 +230,51 @@ export async function autoCreateConsultationInvoice({
   }
 }
 
-// Front-desk/admin recording how the invoice total was actually collected —
-// same cash/online record-keeping-only fields as appointment confirmation
-// (see confirmAppointment in firebase/appointments.js). Not payment
-// processing: no money moves through this app either way.
-export function recordInvoicePayment(invoiceId, { paymentMethod, paidBy }) {
-  return updateDoc(doc(db, INVOICES_COLLECTION, invoiceId), {
-    status: INVOICE_STATUS.PAID,
-    paymentMethod,
+// Records a payment against a 'due' invoice — full or partial. `total` and
+// `currentAmountPaid` come from the caller's already-subscribed invoice (no
+// extra read). Writes a payment-history record and the invoice's own
+// running `amountPaid`/`status` atomically, so the two can never end up out
+// of sync even if one write were to fail independently.
+export async function recordInvoicePayment(
+  invoiceId,
+  { hospitalId, amount, total, currentAmountPaid, paymentMethod, paidBy }
+) {
+  const paymentAmount = round2(Number(amount))
+  if (!(paymentAmount > 0)) {
+    throw new Error('Enter a payment amount greater than 0.')
+  }
+
+  const previousAmountPaid = Number(currentAmountPaid) || 0
+  const remaining = round2(total - previousAmountPaid)
+  if (paymentAmount > remaining + 0.01) {
+    throw new Error(`That's more than the ₹${remaining.toFixed(2)} still outstanding on this invoice.`)
+  }
+
+  const newAmountPaid = round2(Math.min(previousAmountPaid + paymentAmount, total))
+  const newStatus = newAmountPaid >= total - 0.01 ? INVOICE_STATUS.PAID : INVOICE_STATUS.DUE
+
+  const invoiceRef = doc(db, INVOICES_COLLECTION, invoiceId)
+  // Auto-generated id, created up front so it can be included in the same
+  // atomic batch as the invoice update below.
+  const paymentRef = doc(collection(db, INVOICE_PAYMENTS_COLLECTION))
+
+  const batch = writeBatch(db)
+  batch.set(paymentRef, {
+    hospitalId,
+    invoiceId,
+    amount: paymentAmount,
+    method: paymentMethod,
     paidAt: serverTimestamp(),
     paidBy,
+  })
+  batch.update(invoiceRef, {
+    amountPaid: newAmountPaid,
+    status: newStatus,
+    paymentMethod,
+    ...(newStatus === INVOICE_STATUS.PAID ? { paidAt: serverTimestamp(), paidBy } : {}),
     updatedAt: serverTimestamp(),
   })
+  await batch.commit()
 }
 
 // Admin-only correction path (wrong amount, duplicate, refund) — voids

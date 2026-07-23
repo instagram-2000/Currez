@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { subscribeUsersByHospital, setUserStatus, setUserBillingAccess } from "../../firebase/users";
+import { useState } from "react";
+import { setUserStatus, setUserBillingAccess } from "../../firebase/users";
 import { resetPassword } from "../../firebase/auth";
 import { useFeature } from "../../hooks/useFeature";
+import { useHospitalData } from "../../contexts/HospitalDataContext";
 import {
   CREATABLE_STAFF_ROLES_BY_HOSPITAL_ADMIN,
   ROLES,
@@ -11,13 +12,12 @@ import StaffFormModal from "../../components/superadmin/StaffFormModal";
 import CredentialsDialog from "../../components/superadmin/CredentialsDialog";
 import StatusBadge from "../../components/superadmin/StatusBadge";
 import DoctorScheduleEditor from "../../components/hospitalAdmin/DoctorScheduleEditor";
-import { PageSpinner } from "../../components/common/Spinner";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import NavIcon from "../../components/common/NavIcon";
 
 function StaffPage({ tenantSlug }) {
   const { enabled: billingEnabled } = useFeature("billing");
-  const [staff, setStaff] = useState(null);
+  const { staff } = useHospitalData();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCredentials, setNewCredentials] = useState(null);
   const [scheduleDoctor, setScheduleDoctor] = useState(null);
@@ -46,10 +46,6 @@ function StaffPage({ tenantSlug }) {
     setConfirmAction(null);
   }
 
-  useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug]);
-
-  if (staff === null) return <PageSpinner />;
-
   const allStaff = staff.filter(
     (s) => s.role === ROLES.DOCTOR || s.role === ROLES.RECEPTIONIST,
   );
@@ -57,6 +53,63 @@ function StaffPage({ tenantSlug }) {
   const activeStaff = allStaff.filter((s) => s.status === "active");
   const inactiveStaff = allStaff.filter((s) => s.status !== "active");
   const visibleStaff = showInactive ? allStaff : activeStaff;
+
+  // Shared between the desktop table row and the mobile card.
+  function renderActions(member) {
+    return (
+      <>
+        {member.role === ROLES.DOCTOR && (
+          <button
+            onClick={() => setScheduleDoctor(member)}
+            className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
+          >
+            Schedule
+          </button>
+        )}
+        {billingEnabled && member.role === ROLES.RECEPTIONIST && (
+          <button
+            onClick={() => {
+              const currentlyOff = member.billingAccess === false;
+              setUserBillingAccess(member.uid, currentlyOff);
+            }}
+            title={
+              member.billingAccess === false
+                ? "This receptionist cannot create invoices or record payments"
+                : "This receptionist can create invoices and record payments"
+            }
+            className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              member.billingAccess === false
+                ? "text-muted hover:bg-card-strong hover:text-heading"
+                : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+            }`}
+          >
+            Billing: {member.billingAccess === false ? "Off" : "On"}
+          </button>
+        )}
+        <button
+          onClick={() => setConfirmAction({ type: "resetPassword", member })}
+          className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
+        >
+          {resetSentFor === member.uid ? "Sent" : "Reset password"}
+        </button>
+        <button
+          onClick={() =>
+            setConfirmAction({
+              type: member.status === "active" ? "deactivate" : "reactivate",
+              member,
+            })
+          }
+          className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            member.status === "active"
+              ? "text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+              : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+          }`}
+        >
+          {member.status === "active" ? "Deactivate" : "Reactivate"}
+        </button>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -88,7 +141,58 @@ function StaffPage({ tenantSlug }) {
         </button>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
+      {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
+      <div className="space-y-3 md:hidden">
+        {visibleStaff.map((member) => (
+          <div
+            key={member.uid}
+            className={`rounded-2xl border border-line bg-card p-4 shadow-sm ${
+              member.status !== "active" ? "opacity-60" : ""
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-600 ring-1 ring-inset ring-violet-500/20 dark:text-violet-300">
+                  {(member.displayName || '?')[0].toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-heading">{member.displayName}</p>
+                  <p className="truncate text-xs text-faint">{member.email}</p>
+                </div>
+              </div>
+              <StatusBadge status={member.status} kind="user" />
+            </div>
+
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center rounded-lg bg-card-strong px-2.5 py-1 font-medium text-muted">
+                {ROLE_LABELS[member.role] || member.role}
+              </span>
+              {member.role === ROLES.DOCTOR && member.specialization && (
+                <span className="text-faint">{member.specialization}</span>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-1 border-t border-line pt-3">
+              {renderActions(member)}
+            </div>
+          </div>
+        ))}
+        {visibleStaff.length === 0 && (
+          <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                <NavIcon name="staff" className="h-6 w-6 text-faint" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-muted">
+                {showInactive ? "No staff members." : "No active staff."}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
           <thead>
             <tr className="border-b border-line bg-card-strong/30">
@@ -130,59 +234,7 @@ function StaffPage({ tenantSlug }) {
                   <StatusBadge status={member.status} kind="user" />
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {member.role === ROLES.DOCTOR && (
-                      <button
-                        onClick={() => setScheduleDoctor(member)}
-                        className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
-                      >
-                        Schedule
-                      </button>
-                    )}
-                    {billingEnabled && member.role === ROLES.RECEPTIONIST && (
-                      <button
-                        onClick={() => {
-                          const currentlyOff = member.billingAccess === false;
-                          setUserBillingAccess(member.uid, currentlyOff);
-                        }}
-                        title={
-                          member.billingAccess === false
-                            ? "This receptionist cannot create invoices or record payments"
-                            : "This receptionist can create invoices and record payments"
-                        }
-                        className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                          member.billingAccess === false
-                            ? "text-muted hover:bg-card-strong hover:text-heading"
-                            : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
-                        }`}
-                      >
-                        Billing: {member.billingAccess === false ? "Off" : "On"}
-                      </button>
-                    )}
-                    <button
-                      onClick={() =>
-                        setConfirmAction({ type: "resetPassword", member })
-                      }
-                      className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
-                    >
-                      {resetSentFor === member.uid ? "Sent" : "Reset password"}
-                    </button>
-                    <button
-                      onClick={() =>
-                        setConfirmAction({
-                          type: member.status === "active" ? "deactivate" : "reactivate",
-                          member,
-                        })
-                      }
-                      className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                        member.status === "active"
-                          ? "text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
-                          : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
-                      }`}
-                    >
-                      {member.status === "active" ? "Deactivate" : "Reactivate"}
-                    </button>
-                  </div>
+                  <div className="flex items-center justify-end gap-1">{renderActions(member)}</div>
                 </td>
               </tr>
             ))}

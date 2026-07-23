@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { subscribeAppointments, updateAppointmentStatus } from '../../firebase/appointments'
-import { subscribePatients } from '../../firebase/patients'
-import { subscribeUsersByHospital } from '../../firebase/users'
+import { useMemo, useState } from 'react'
+import { updateAppointmentStatus } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
+import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { ROLES } from '../../utils/roles'
+import { canEditModule } from '../../utils/permissions'
 import { isTimeWithinSchedule } from '../../utils/doctorSchedule'
 import { shiftDateString } from '../../utils/dates'
 import { TABS, TAB_TODAY, categorizeAppointments } from '../../utils/appointmentFilters'
@@ -11,7 +11,6 @@ import BookAppointmentModal from '../../components/hospitalAdmin/BookAppointment
 import ConfirmPaymentModal from '../../components/hospitalAdmin/ConfirmPaymentModal'
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
 import RescheduleAppointmentModal from '../../components/hospitalAdmin/RescheduleAppointmentModal'
-import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
 
 const STATUS_STYLES = {
@@ -43,17 +42,19 @@ function AppointmentStatusBadge({ status }) {
 }
 
 function AppointmentsPage({ tenantSlug }) {
-  const { role, user } = useAuth()
+  const { role, user, userDoc } = useAuth()
   const weekAgo = shiftDateString(-7)
   const weekLater = shiftDateString(7)
   const isDoctor = role === ROLES.DOCTOR
-  const canBook = role === ROLES.HOSPITAL_ADMIN || role === ROLES.RECEPTIONIST
+  // Super-Admin-assigned permission (see src/utils/permissions.js) narrows
+  // this further — a role that could normally book/confirm/complete may
+  // still be restricted to view-only for this specific staff member.
+  const canEdit = canEditModule(userDoc, 'appointments')
+  const canBook = (role === ROLES.HOSPITAL_ADMIN || role === ROLES.RECEPTIONIST) && canEdit
   const canConfirm = canBook
   const canViewNotes = isDoctor || role === ROLES.HOSPITAL_ADMIN
 
-  const [appointments, setAppointments] = useState(null)
-  const [patients, setPatients] = useState([])
-  const [staff, setStaff] = useState([])
+  const { appointments: allAppointments, patients, staff } = useHospitalData()
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState(TAB_TODAY)
   const [showBookModal, setShowBookModal] = useState(false)
@@ -62,9 +63,13 @@ function AppointmentsPage({ tenantSlug }) {
   const [viewingAppt, setViewingAppt] = useState(null)
   const [reschedulingAppt, setReschedulingAppt] = useState(null)
 
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, weekAgo, weekLater), [tenantSlug, weekAgo, weekLater])
-  useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
-  useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
+  // The shared context holds a much wider window (365 days back, unbounded
+  // forward) than this page needs — narrow it to the ±7 day operational
+  // view here instead of opening a second, differently-windowed listener.
+  const appointments = useMemo(
+    () => allAppointments.filter((a) => a.date >= weekAgo && a.date <= weekLater),
+    [allAppointments, weekAgo, weekLater]
+  )
 
   const doctors = staff.filter((s) => s.role === ROLES.DOCTOR && s.status === 'active')
   const doctorsById = useMemo(
@@ -80,7 +85,6 @@ function AppointmentsPage({ tenantSlug }) {
   }
 
   const visible = useMemo(() => {
-    if (!appointments) return []
     let list = isDoctor
       ? appointments.filter((a) => a.doctorId === user.uid && a.status !== 'pending')
       : appointments
@@ -93,12 +97,62 @@ function AppointmentsPage({ tenantSlug }) {
     return list
   }, [appointments, isDoctor, user.uid, search])
 
-  const categorized = useMemo(() => {
-    if (!appointments) return {}
-    return categorizeAppointments(visible)
-  }, [visible])
+  const categorized = useMemo(() => categorizeAppointments(visible), [visible])
 
-  if (appointments === null) return <PageSpinner />
+  // Shared between the desktop table row and the mobile card so the two
+  // views can never drift out of sync on which actions are available.
+  function renderActions(appt) {
+    return (
+      <>
+        {appt.status === 'pending' && canConfirm && (
+          <button
+            onClick={() => setConfirmingAppointment(appt)}
+            className="cursor-pointer rounded-lg bg-indigo-500/10 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/20 dark:text-indigo-300"
+          >
+            Confirm
+          </button>
+        )}
+        {appt.status === 'scheduled' && canEdit && (
+          <>
+            {canBook && (
+              <button
+                onClick={() => setReschedulingAppt(appt)}
+                className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  hasScheduleConflict(appt)
+                    ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400'
+                    : 'text-muted hover:bg-card-strong hover:text-heading'
+                }`}
+              >
+                Reschedule
+              </button>
+            )}
+            <button
+              onClick={() =>
+                isDoctor ? setCompletingAppt(appt) : updateAppointmentStatus(appt.id, 'completed')
+              }
+              className="cursor-pointer rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+            >
+              Complete
+            </button>
+            <button
+              onClick={() => updateAppointmentStatus(appt.id, 'cancelled')}
+              className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        {appt.status === 'completed' && canViewNotes && (
+          <button
+            onClick={() => setViewingAppt(appt)}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
+          >
+            View notes
+          </button>
+        )}
+      </>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -149,7 +203,62 @@ function AppointmentsPage({ tenantSlug }) {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
+      {/* Mobile: stacked cards instead of a horizontally-scrolling table —
+          one card per appointment, same data and actions as the table below. */}
+      <div className="space-y-3 md:hidden">
+        {(categorized[activeTab] || []).map((appt) => (
+          <div key={appt.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-heading">{appt.patientName}</p>
+                {appt.patientPhone && <p className="text-xs text-faint">{appt.patientPhone}</p>}
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <AppointmentStatusBadge status={appt.status} />
+                {hasScheduleConflict(appt) && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 ring-1 ring-amber-500/20 ring-inset dark:text-amber-400">
+                    <NavIcon name="schedule" className="h-3 w-3" />
+                    Conflict
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <dl className="mt-3 grid grid-cols-2 gap-y-1.5 text-xs">
+              <dt className="text-faint">Date</dt>
+              <dd className="text-right font-medium text-heading">{appt.date}</dd>
+              <dt className="text-faint">Time</dt>
+              <dd className="text-right text-body">{appt.time || '—'}</dd>
+              {!isDoctor && (
+                <>
+                  <dt className="text-faint">Doctor</dt>
+                  <dd className="text-right text-body">{appt.doctorName || 'Unassigned'}</dd>
+                  <dt className="text-faint">Payment</dt>
+                  <dd className="text-right text-body">{PAYMENT_LABELS[appt.paymentMethod] || '—'}</dd>
+                </>
+              )}
+            </dl>
+
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3">
+              {renderActions(appt)}
+            </div>
+          </div>
+        ))}
+        {(categorized[activeTab] || []).length === 0 && (
+          <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                <NavIcon name="appointments" className="h-6 w-6 text-faint" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-muted">No {activeTab} appointments</p>
+              <p className="mt-1 text-xs text-faint">Appointments will appear here once booked</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
           <thead>
             <tr className="border-b border-line bg-card-strong/30">
@@ -196,54 +305,7 @@ function AppointmentsPage({ tenantSlug }) {
                   <td className="px-5 py-3.5 text-muted">{PAYMENT_LABELS[appt.paymentMethod] || '—'}</td>
                 )}
                 <td className="px-5 py-3.5 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {appt.status === 'pending' && canConfirm && (
-                      <button
-                        onClick={() => setConfirmingAppointment(appt)}
-                        className="cursor-pointer rounded-lg bg-indigo-500/10 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/20 dark:text-indigo-300"
-                      >
-                        Confirm
-                      </button>
-                    )}
-                    {appt.status === 'scheduled' && (
-                      <>
-                        {canBook && (
-                          <button
-                            onClick={() => setReschedulingAppt(appt)}
-                            className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                              hasScheduleConflict(appt)
-                                ? 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400'
-                                : 'text-muted hover:bg-card-strong hover:text-heading'
-                            }`}
-                          >
-                            Reschedule
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            isDoctor ? setCompletingAppt(appt) : updateAppointmentStatus(appt.id, 'completed')
-                          }
-                          className="cursor-pointer rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
-                        >
-                          Complete
-                        </button>
-                        <button
-                          onClick={() => updateAppointmentStatus(appt.id, 'cancelled')}
-                          className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )}
-                    {appt.status === 'completed' && canViewNotes && (
-                      <button
-                        onClick={() => setViewingAppt(appt)}
-                        className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
-                      >
-                        View notes
-                      </button>
-                    )}
-                  </div>
+                  <div className="flex items-center justify-end gap-2">{renderActions(appt)}</div>
                 </td>
               </tr>
             ))}

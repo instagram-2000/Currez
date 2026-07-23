@@ -12,6 +12,7 @@ import SectionRenderer from '../components/hospital/SectionRenderer'
 import ContactSection from '../components/hospital/ContactSection'
 import BookAppointmentSection from '../components/hospital/BookAppointmentSection'
 import Footer from '../components/hospital/Footer'
+import MobileBookingBar from '../components/hospital/MobileBookingBar'
 import BookAppointmentModal from '../components/hospital/BookAppointmentModal'
 import CheckStatusModal from '../components/hospital/CheckStatusModal'
 
@@ -59,6 +60,7 @@ function HospitalLandingPage({ slug }) {
       />
       <HeroSection
         config={config}
+        doctorCount={doctors.length}
         onBookClick={() => setActiveModal('book')}
         onStatusClick={() => setActiveModal('status')}
       />
@@ -67,6 +69,15 @@ function HospitalLandingPage({ slug }) {
       <ContactSection config={config} />
       <BookAppointmentSection config={config} />
       <Footer config={config} onStatusClick={() => setActiveModal('status')} />
+
+      {/* Bottom padding on mobile only, so the fixed booking bar never
+          covers the last bit of footer content. */}
+      <div className="h-20 sm:hidden" aria-hidden="true" />
+      <MobileBookingBar
+        config={config}
+        onBookClick={() => setActiveModal('book')}
+        onStatusClick={() => setActiveModal('status')}
+      />
 
       {activeModal === 'book' && (
         <BookAppointmentModal

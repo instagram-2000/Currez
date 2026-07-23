@@ -1,40 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
-import { subscribeHospital } from '../../firebase/hospitals'
-import { subscribeAppointments } from '../../firebase/appointments'
-import { subscribeUsersByHospital } from '../../firebase/users'
+import { useMemo, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { ROLES } from '../../utils/roles'
-import { shiftDateString } from '../../utils/dates'
 import PrescriptionDocument from '../../components/hospitalAdmin/PrescriptionDocument'
-import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
 
-// Looks back a year — a "prescription history," not a live operational
-// list like Appointments, so it deliberately favors a wide window over the
-// tight ±7 days that page uses.
-const HISTORY_WINDOW_DAYS = 365
-
-// Deliberately reads straight off `appointments` (via the same
-// subscribeAppointments already used everywhere else) instead of a
-// dedicated `prescriptions` collection — see the "why no rule" note in
-// firestore.rules next to the /invoices block. This page is a presentation
-// layer over the `concerns`/`prescription`/`tests` fields CompleteVisitModal
-// already writes; nothing here is new data that needs protecting.
-function PrescriptionsPage({ tenantSlug }) {
+// Deliberately reads straight off `appointments` (via the same shared
+// HospitalDataContext window used everywhere else) instead of a dedicated
+// `prescriptions` collection — see the "why no rule" note in firestore.rules
+// next to the /invoices block. This page is a presentation layer over the
+// `concerns`/`prescription`/`tests` fields CompleteVisitModal already
+// writes; nothing here is new data that needs protecting.
+function PrescriptionsPage() {
   const { role, user } = useAuth()
   const isDoctor = role === ROLES.DOCTOR
+  const { hospital, appointments, staff } = useHospitalData()
 
-  const [hospital, setHospital] = useState(undefined)
-  const [appointments, setAppointments] = useState(null)
-  const [staff, setStaff] = useState([])
   const [search, setSearch] = useState('')
   const [doctorFilter, setDoctorFilter] = useState('all')
   const [viewingId, setViewingId] = useState(null)
-
-  useEffect(() => subscribeHospital(tenantSlug, setHospital), [tenantSlug])
-  const windowStart = shiftDateString(-HISTORY_WINDOW_DAYS)
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, windowStart), [tenantSlug, windowStart])
-  useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
 
   const doctorsById = useMemo(
     () => Object.fromEntries(staff.filter((s) => s.role === ROLES.DOCTOR).map((d) => [d.uid, d])),
@@ -62,8 +46,6 @@ function PrescriptionsPage({ tenantSlug }) {
   }, [appointments, isDoctor, user?.uid, doctorFilter, search])
 
   const viewingAppointment = viewingId ? visible.find((a) => a.id === viewingId) || null : null
-
-  if (appointments === null || hospital === undefined) return <PageSpinner />
 
   return (
     <div className="space-y-6">
@@ -98,7 +80,56 @@ function PrescriptionsPage({ tenantSlug }) {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
+      {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
+      <div className="space-y-3 md:hidden">
+        {visible.map((appt) => (
+          <div key={appt.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-heading">{appt.patientName}</p>
+                {appt.patientPhone && <p className="text-xs text-faint">{appt.patientPhone}</p>}
+              </div>
+              <p className="shrink-0 text-right text-xs text-muted">
+                {appt.date}
+                {appt.time && <span className="block text-faint">{appt.time}</span>}
+              </p>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              {!isDoctor && <span className="text-muted">{appt.doctorName || 'Unassigned'}</span>}
+              <span className="inline-flex items-center rounded-lg bg-card-strong px-2 py-0.5 font-medium text-muted">
+                {(appt.prescription || []).length} medicine{(appt.prescription || []).length === 1 ? '' : 's'}
+              </span>
+              <span className="inline-flex items-center rounded-lg bg-card-strong px-2 py-0.5 font-medium text-muted">
+                {(appt.tests || []).length} test{(appt.tests || []).length === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setViewingId(appt.id)}
+              className="mt-3 w-full cursor-pointer rounded-lg bg-indigo-500/10 px-3 py-2 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/20 dark:text-indigo-300"
+            >
+              View
+            </button>
+          </div>
+        ))}
+        {visible.length === 0 && (
+          <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                <NavIcon name="prescription" className="h-6 w-6 text-faint" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-muted">No prescriptions found</p>
+              <p className="mt-1 text-xs text-faint">
+                These appear once a doctor completes a visit with notes, medicines or tests
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
           <thead>
             <tr className="border-b border-line bg-card-strong/30">

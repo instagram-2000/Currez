@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { subscribeAppointments } from '../../firebase/appointments'
 import { useAuth } from '../../contexts/AuthContext'
+import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { todayDateString } from '../../utils/dates'
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
 import NavIcon from '../../components/common/NavIcon'
@@ -12,17 +12,17 @@ const STATUS_STYLES = {
   cancelled: 'bg-card-strong text-muted ring-line',
 }
 
-function DoctorOverviewPage({ tenantSlug }) {
+function DoctorOverviewPage() {
   const location = useLocation()
   const { user } = useAuth()
-  const [appointments, setAppointments] = useState([])
+  const { appointments } = useHospitalData()
   const [completingAppt, setCompletingAppt] = useState(null)
   const [viewingAppt, setViewingAppt] = useState(null)
 
   const today = todayDateString()
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, today), [tenantSlug, today])
-
-  const mine = appointments.filter((a) => a.doctorId === user.uid && a.status !== 'pending')
+  const mine = appointments.filter(
+    (a) => a.doctorId === user.uid && a.status !== 'pending' && a.date >= today
+  )
   const todaysAppointments = mine.filter((a) => a.date === today)
   const upcoming = mine.filter((a) => a.date > today && a.status === 'scheduled')
 

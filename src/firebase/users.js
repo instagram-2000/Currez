@@ -39,6 +39,15 @@ export function updateDoctorProfile(uid, profile) {
   return updateDoc(doc(db, USERS_COLLECTION, uid), { ...profile, updatedAt: serverTimestamp() })
 }
 
+// A doctor's own quick-pick medicine list (see CompleteVisitModal) — just
+// another field on their own user doc, so it's already covered by
+// isSelfDoctorScheduleUpdate in firestore.rules (only role/hospitalId/
+// status/email are frozen there; every other field, including this one, a
+// doctor may already update on their own record).
+export function updateMedicineTemplates(uid, templates) {
+  return updateDoc(doc(db, USERS_COLLECTION, uid), { medicineTemplates: templates, updatedAt: serverTimestamp() })
+}
+
 export function getDoctor(uid) {
   return getDoc(doc(db, USERS_COLLECTION, uid)).then((snap) => (snap.exists() ? { uid: snap.id, ...snap.data() } : null))
 }
@@ -101,9 +110,30 @@ export function setUserStatus(uid, status) {
 // others, independent of the blanket RECEPTIONIST role. Missing/undefined
 // on a user doc means allowed — see firestore.rules' isBillingStaffOf —
 // so every receptionist that existed before this flag was added keeps its
-// current access; only an explicit `false` here takes it away.
+// current access; only an explicit `false` here takes it away. Also keeps
+// the newer, generalized `permissions.billing` field (see
+// setUserModulePermission below) in sync, so this quick toggle and the Super
+// Admin staff-profile editor never disagree about the same receptionist.
 export function setUserBillingAccess(uid, enabled) {
-  return updateDoc(doc(db, USERS_COLLECTION, uid), { billingAccess: enabled, updatedAt: serverTimestamp() })
+  return updateDoc(doc(db, USERS_COLLECTION, uid), {
+    billingAccess: enabled,
+    'permissions.billing': enabled ? 'edit' : 'none',
+    updatedAt: serverTimestamp(),
+  })
+}
+
+// Super Admin-only, per-staff-member module override (see
+// src/utils/permissions.js) — one module's access level at a time, using a
+// dot-path update so it never clobbers other modules' levels already set on
+// the same `permissions` map. Billing is special-cased to also keep the
+// legacy `billingAccess` boolean in sync (see setUserBillingAccess above and
+// firestore.rules' isBillingStaffOf, which still reads both).
+export function setUserModulePermission(uid, moduleKey, level) {
+  const patch = { [`permissions.${moduleKey}`]: level, updatedAt: serverTimestamp() }
+  if (moduleKey === 'billing') {
+    patch.billingAccess = level !== 'none'
+  }
+  return updateDoc(doc(db, USERS_COLLECTION, uid), patch)
 }
 
 export async function hasActiveStaffForHospital(hospitalId) {

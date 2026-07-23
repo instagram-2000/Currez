@@ -4,13 +4,14 @@ import { isAvailableToday, availableDaysShortLabel } from '../../utils/doctorSch
 import { initials } from '../../utils/initials'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 function DoctorsSection({ doctors, slug }) {
   const { t } = useLanguage()
   if (!doctors || doctors.length === 0) return null
 
   return (
-    <section id="doctors" className="px-6 py-20 md:px-12">
+    <section id="doctors" className={`py-20 ${SITE_CONTAINER}`}>
       <Reveal>
         <SectionEyebrow>{t('hospital.navDoctors')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.ourDoctors')}</h2>

@@ -1,6 +1,7 @@
 import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 function ServicesSection({ data }) {
   const items = data?.items ?? []
@@ -8,7 +9,7 @@ function ServicesSection({ data }) {
   if (items.length === 0) return null
 
   return (
-    <section id="services" className="relative overflow-hidden px-6 py-20 md:px-12">
+    <section id="services" className={`relative overflow-hidden py-20 ${SITE_CONTAINER}`}>
       <div
         className="pointer-events-none absolute top-0 right-0 h-72 w-72 -translate-y-1/3 translate-x-1/3 rounded-full opacity-10 blur-3xl"
         style={{ background: 'radial-gradient(circle, var(--tenant-primary, #6366f1), transparent 70%)' }}

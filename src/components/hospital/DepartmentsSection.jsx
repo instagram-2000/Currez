@@ -1,6 +1,7 @@
 import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 // Deliberately not another card grid — Services and Doctors already use
 // that shape, so Departments reads as an indexed list instead. Same page,
@@ -11,7 +12,7 @@ function DepartmentsSection({ data }) {
   if (items.length === 0) return null
 
   return (
-    <section id="departments" className="px-6 py-20 md:px-12">
+    <section id="departments" className={`py-20 ${SITE_CONTAINER}`}>
       <Reveal>
         <SectionEyebrow>{t('hospital.navDepartments')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.departments')}</h2>

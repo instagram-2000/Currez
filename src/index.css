@@ -150,4 +150,11 @@ body {
   #root {
     display: none !important;
   }
+
+  /* Sensible letterhead margins for the invoice/prescription documents
+     (InvoiceDetailModal, PrescriptionDocument) — without this the browser's
+     own default print margins vary a lot between browsers/printers. */
+  @page {
+    margin: 14mm 12mm;
+  }
 }

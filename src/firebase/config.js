@@ -1,5 +1,10 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
+import {
+  connectFirestoreEmulator,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 
 export const firebaseConfig = {
@@ -13,7 +18,16 @@ export const firebaseConfig = {
 }
 
 export const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig)
-export const db = getFirestore(firebaseApp)
+
+// Persistent local cache (IndexedDB, shared across tabs) means a listener
+// that's torn down and re-attached (e.g. remounting a page) serves its
+// initial snapshot from disk instead of re-reading every document from the
+// server again — this is on top of, not instead of, deduplicating listeners
+// via HospitalDataContext/FeatureContext; the cache mainly softens repeat
+// reads across page refreshes/tab reopens.
+export const db = initializeFirestore(firebaseApp, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 export const auth = getAuth(firebaseApp)
 
 // Opt-in local dev flag — points Firestore at `firebase emulators:start

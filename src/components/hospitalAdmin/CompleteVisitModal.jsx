@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { completeAppointmentWithNotes } from '../../firebase/appointments'
+import { updateMedicineTemplates } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
 import { validators } from '../../utils/validations'
 import { useFormValidation } from '../../hooks/useFormValidation'
@@ -22,7 +23,7 @@ function emptyTest() {
 // record what the visit was actually for. Also reused read-only to look
 // back at a past visit's notes (no editing, no submit).
 function CompleteVisitModal({ appointment, readOnly = false, onClose, onCompleted }) {
-  const { user } = useAuth()
+  const { user, userDoc } = useAuth()
   const [concerns, setConcerns] = useState(appointment.concerns || '')
   const [prescription, setPrescription] = useState(
     appointment.prescription?.length ? appointment.prescription : []
@@ -30,12 +31,37 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
   const [tests, setTests] = useState(appointment.tests?.length ? appointment.tests : [])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [savedRowIndex, setSavedRowIndex] = useState(null)
   const { errors, validate, clearFieldError } = useFormValidation({
     concerns: readOnly ? [] : [validators.required('Note the patient concerns before completing the visit.')],
   })
 
+  const templates = userDoc?.medicineTemplates || []
+
   function updateMedicine(index, field, value) {
     setPrescription((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)))
+  }
+
+  function addFromTemplate(template) {
+    setPrescription((prev) => [...prev, { ...template }])
+  }
+
+  // Saves this row as a personal quick-pick for next time — deduped so
+  // clicking it repeatedly doesn't pile up identical entries.
+  async function saveRowAsTemplate(index) {
+    const row = prescription[index]
+    if (!row.medicine.trim()) return
+    const entry = { medicine: row.medicine.trim(), dosage: row.dosage.trim(), duration: row.duration.trim() }
+    const exists = templates.some(
+      (t) => t.medicine === entry.medicine && t.dosage === entry.dosage && t.duration === entry.duration
+    )
+    if (exists) return
+    setSavedRowIndex(index)
+    try {
+      await updateMedicineTemplates(user.uid, [...templates, entry])
+    } finally {
+      setTimeout(() => setSavedRowIndex(null), 2000)
+    }
   }
 
   function updateTest(index, field, value) {
@@ -113,6 +139,25 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
             )}
           </div>
 
+          {!readOnly && templates.length > 0 && (
+            <select
+              value=""
+              onChange={(e) => {
+                const template = templates[Number(e.target.value)]
+                if (template) addFromTemplate(template)
+                e.target.value = ''
+              }}
+              className="mt-2 w-full cursor-pointer rounded-xl border border-dashed border-line bg-card-strong/40 px-3 py-2 text-xs text-muted focus:border-indigo-500/50 focus:outline-none"
+            >
+              <option value="">+ Quick-add a saved medicine…</option>
+              {templates.map((t, i) => (
+                <option key={`${t.medicine}-${t.dosage}-${t.duration}`} value={i}>
+                  {t.medicine}{t.dosage ? ` — ${t.dosage}` : ''}{t.duration ? ` — ${t.duration}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+
           <div className="mt-2 space-y-2">
             {prescription.map((row, index) => (
               <div key={index} className="flex items-start gap-2 rounded-xl border border-line bg-card-strong/50 p-3">
@@ -142,6 +187,20 @@ function CompleteVisitModal({ appointment, readOnly = false, onClose, onComplete
                     className={`${inputClass} mt-0 disabled:opacity-70`}
                   />
                 </div>
+                {!readOnly && row.medicine.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => saveRowAsTemplate(index)}
+                    title="Save as a quick-pick for next time"
+                    className="mt-1 cursor-pointer rounded-lg p-1 text-faint transition-colors hover:bg-indigo-500/10 hover:text-indigo-500"
+                  >
+                    {savedRowIndex === index ? (
+                      <NavIcon name="check" className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <NavIcon name="star" className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                )}
                 {!readOnly && (
                   <button
                     type="button"

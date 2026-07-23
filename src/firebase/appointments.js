@@ -344,6 +344,13 @@ export async function getAppointmentByToken(token, phone) {
 // Public status-check lookup by phone alone (no token) — resolves every
 // token booked under that phone number at this hospital, then fetches
 // each appointment. Returns [] if nothing matches.
+// Deliberately N individual getDoc() calls, not a documentId()-'in' query —
+// firestore.rules only grants public (unauthenticated) access to
+// appointments via `get`, never `list` ("never enumerate the collection"),
+// specifically so a phone number can only ever resolve the exact tokens
+// already recorded against it in phoneLookup, not browse the collection.
+// A batched query here would need `list` to be public too, which would
+// undermine that boundary — so this stays as-is.
 export async function getAppointmentsByPhone(hospitalId, phone) {
   const lookupSnap = await getDoc(doc(db, PHONE_LOOKUP_COLLECTION, phoneLookupId(hospitalId, phone)))
   if (!lookupSnap.exists()) return []

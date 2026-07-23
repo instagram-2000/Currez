@@ -66,7 +66,68 @@ function HospitalsListPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
+      {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
+      <div className="space-y-3 md:hidden">
+        {filtered.map((hospital) => (
+          <div key={hospital.slug} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-600 ring-1 ring-indigo-500/20 ring-inset dark:text-indigo-300">
+                  {(hospital.title || '?')[0].toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-heading">{hospital.title}</p>
+                  <p className="truncate text-xs text-faint">{hospital.slug}</p>
+                </div>
+              </div>
+              <StatusBadge status={hospital.status} />
+            </div>
+            <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+              <Link
+                to={`/superadmin/hospitals/${hospital.slug}`}
+                className="flex-1 cursor-pointer rounded-lg bg-indigo-500/10 px-3 py-2 text-center text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/20 dark:text-indigo-300"
+              >
+                Manage
+              </Link>
+              <button
+                onClick={() => {
+                  setDeleteError('')
+                  setPendingDelete(hospital)
+                }}
+                className="cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-muted transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                <NavIcon name="hospitals" className="h-6 w-6 text-faint" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-muted">
+                {search ? 'No hospitals match your search' : 'No hospitals yet'}
+              </p>
+              {!search && (
+                <>
+                  <p className="mt-1 text-xs text-faint">Onboard your first hospital to get started</p>
+                  <Link
+                    to="/superadmin/hospitals/new"
+                    className="mt-4 cursor-pointer rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/25 transition-all hover:bg-indigo-500"
+                  >
+                    + New Hospital
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
           <thead>
             <tr className="border-b border-line bg-card-strong/30">

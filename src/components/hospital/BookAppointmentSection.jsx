@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import AppointmentTokenCard from './AppointmentTokenCard'
 import Reveal from '../common/Reveal'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-heading placeholder:text-faint focus:border-line-strong focus:outline-none'
@@ -57,7 +58,7 @@ function BookAppointmentSection({ config }) {
   }
 
   return (
-    <section className="px-6 py-20 md:px-12">
+    <section className={`py-20 ${SITE_CONTAINER}`}>
       <Reveal>
         <SectionEyebrow>{t('booking.sectionEyebrow')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('booking.sectionTitle')}</h2>

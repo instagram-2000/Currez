@@ -47,6 +47,8 @@ export const translations = {
     "hospital.day": "Day",
     "hospital.opdHours": "OPD Hours",
     "hospital.mapPlaceholder": "Map / location photo",
+    "hospital.footerTagline": "Quality care, made easy to book.",
+    "hospital.quickLinks": "Quick links",
 
     "booking.title": "Book an appointment",
     "booking.subtitle": "{hospital} — takes under a minute.",
@@ -164,6 +166,8 @@ export const translations = {
     "hospital.day": "दिन",
     "hospital.opdHours": "ओपीडी समय",
     "hospital.mapPlaceholder": "मानचित्र / स्थान फोटो",
+    "hospital.footerTagline": "गुणवत्तापूर्ण देखभाल, बुक करना आसान।",
+    "hospital.quickLinks": "त्वरित लिंक",
 
     "booking.title": "अपॉइंटमेंट बुक करें",
     "booking.subtitle": "{hospital} — एक मिनट से भी कम समय में।",
@@ -282,6 +286,8 @@ export const translations = {
     "hospital.day": "दिवस",
     "hospital.opdHours": "ओपीडी वेळ",
     "hospital.mapPlaceholder": "नकाशा / स्थान फोटो",
+    "hospital.footerTagline": "दर्जेदार काळजी, बुक करणे सोपे.",
+    "hospital.quickLinks": "जलद दुवे",
 
     "booking.title": "अपॉइंटमेंट बुक करा",
     "booking.subtitle": "{hospital} — एका मिनिटापेक्षा कमी वेळात.",

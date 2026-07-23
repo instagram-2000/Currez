@@ -1,5 +1,6 @@
 import Reveal from '../common/Reveal'
 import NavIcon from '../common/NavIcon'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 // Departments/Doctors counts are derived from real config data rather than
 // stored separately, so they can never drift out of sync with what's
@@ -17,7 +18,7 @@ function StatsBand({ config, doctorCount }) {
   if (stats.length === 0) return null
 
   return (
-    <section className="relative z-10 -mt-10 px-6 md:px-12">
+    <section className={`relative z-10 -mt-10 ${SITE_CONTAINER}`}>
       <div
         className={`mx-auto grid max-w-5xl gap-4 ${
           stats.length >= 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2'
@@ -27,7 +28,7 @@ function StatsBand({ config, doctorCount }) {
           <Reveal
             key={stat.label}
             delay={i * 60}
-            className="rounded-2xl border border-line bg-card p-5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:border-line-strong"
+            className="rounded-2xl border border-line bg-card p-5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:border-line-strong hover:shadow-lg"
           >
             <span
               className="flex h-10 w-10 items-center justify-center rounded-xl"

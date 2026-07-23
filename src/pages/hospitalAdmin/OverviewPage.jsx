@@ -1,36 +1,21 @@
-import { useEffect, useState } from 'react'
-import { subscribeHospital } from '../../firebase/hospitals'
-import { subscribeAppointments } from '../../firebase/appointments'
-import { subscribePatients } from '../../firebase/patients'
-import { subscribeUsersByHospital } from '../../firebase/users'
 import { useAuth } from '../../contexts/AuthContext'
+import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { ROLES } from '../../utils/roles'
 import { todayDateString } from '../../utils/dates'
 import StatCard from '../../components/superadmin/StatCard'
 import StatusBadge from '../../components/superadmin/StatusBadge'
-import { PageSpinner } from '../../components/common/Spinner'
 import DoctorOverviewPage from './DoctorOverviewPage'
 
-function OverviewPage({ tenantSlug }) {
+function OverviewPage() {
   const { role } = useAuth()
-  if (role === ROLES.DOCTOR) return <DoctorOverviewPage tenantSlug={tenantSlug} />
-  return <HospitalOverview tenantSlug={tenantSlug} />
+  if (role === ROLES.DOCTOR) return <DoctorOverviewPage />
+  return <HospitalOverview />
 }
 
-function HospitalOverview({ tenantSlug }) {
-  const [hospital, setHospital] = useState(undefined)
-  const [appointments, setAppointments] = useState([])
-  const [patients, setPatients] = useState([])
-  const [staff, setStaff] = useState([])
+function HospitalOverview() {
+  const { hospital, appointments, patients, staff } = useHospitalData()
 
-  useEffect(() => subscribeHospital(tenantSlug, setHospital), [tenantSlug])
   const today = todayDateString()
-  useEffect(() => subscribeAppointments(tenantSlug, setAppointments, today, today), [tenantSlug, today])
-  useEffect(() => subscribePatients(tenantSlug, setPatients), [tenantSlug])
-  useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
-
-  if (hospital === undefined) return <PageSpinner />
-
   const todaysAppointments = appointments.filter((a) => a.date === today)
   const doctorCount = staff.filter((s) => s.role === ROLES.DOCTOR && s.status === 'active').length
   const pendingCount = todaysAppointments.filter((a) => a.status === 'pending').length

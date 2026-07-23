@@ -1,18 +1,13 @@
-import { useEffect, useState } from 'react'
-import { subscribeUsersByHospital } from '../../firebase/users'
+import { useState } from 'react'
+import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { ROLES } from '../../utils/roles'
 import DoctorScheduleEditor from '../../components/hospitalAdmin/DoctorScheduleEditor'
 import StatusBadge from '../../components/superadmin/StatusBadge'
-import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
 
-function DoctorsPage({ tenantSlug }) {
-  const [staff, setStaff] = useState(null)
+function DoctorsPage() {
+  const { staff } = useHospitalData()
   const [scheduleDoctor, setScheduleDoctor] = useState(null)
-
-  useEffect(() => subscribeUsersByHospital(tenantSlug, setStaff), [tenantSlug])
-
-  if (staff === null) return <PageSpinner />
 
   const doctors = staff.filter((s) => s.role === ROLES.DOCTOR)
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { createInvoice } from '../../firebase/billing'
+import { createInvoice, TAX_RATE_OPTIONS } from '../../firebase/billing'
 import { useAuth } from '../../contexts/AuthContext'
 import Modal from '../common/Modal'
 import NavIcon from '../common/NavIcon'
@@ -26,6 +26,7 @@ function CreateInvoiceModal({ hospitalId, eligibleAppointments, doctorsById, onC
   const [appointmentId, setAppointmentId] = useState('')
   const [lineItems, setLineItems] = useState([])
   const [discount, setDiscount] = useState('0')
+  const [taxRate, setTaxRate] = useState(0)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -48,6 +49,7 @@ function CreateInvoiceModal({ hospitalId, eligibleAppointments, doctorsById, onC
       },
     ])
     setDiscount('0')
+    setTaxRate(0)
   }
 
   function updateLineItem(index, field, value) {
@@ -58,10 +60,12 @@ function CreateInvoiceModal({ hospitalId, eligibleAppointments, doctorsById, onC
     setLineItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const subtotal = useMemo(
+  const preTaxSubtotal = useMemo(
     () => lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
     [lineItems]
   )
+  const taxAmount = taxRate > 0 ? Math.round(preTaxSubtotal * (taxRate / 100) * 100) / 100 : 0
+  const subtotal = preTaxSubtotal + taxAmount
   const clampedDiscount = Math.min(Math.max(Number(discount) || 0, 0), subtotal)
   const total = Math.max(subtotal - clampedDiscount, 0)
 
@@ -94,6 +98,7 @@ function CreateInvoiceModal({ hospitalId, eligibleAppointments, doctorsById, onC
           time: selectedAppointment.time,
           lineItems,
           discount: clampedDiscount,
+          taxRate,
         },
         user.uid
       )
@@ -186,23 +191,45 @@ function CreateInvoiceModal({ hospitalId, eligibleAppointments, doctorsById, onC
                 </div>
               </div>
 
-              <div>
-                <label className={labelClass}>Discount (flat amount)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                  className={`${inputClass} max-w-[10rem]`}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Discount (flat amount)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Tax / GST</label>
+                  <select
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                    className={`${inputClass} cursor-pointer`}
+                  >
+                    {TAX_RATE_OPTIONS.map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate === 0 ? 'No tax' : `GST ${rate}%`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-1.5 rounded-xl border border-line bg-card-strong/50 p-4 text-sm">
                 <div className="flex justify-between text-muted">
-                  <span>Subtotal</span>
-                  <span>{formatMoney(subtotal)}</span>
+                  <span>Items subtotal</span>
+                  <span>{formatMoney(preTaxSubtotal)}</span>
                 </div>
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-muted">
+                    <span>GST ({taxRate}%)</span>
+                    <span>+{formatMoney(taxAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-muted">
                   <span>Discount</span>
                   <span>-{formatMoney(clampedDiscount)}</span>

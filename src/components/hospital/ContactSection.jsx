@@ -2,14 +2,19 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import SectionEyebrow from './SectionEyebrow'
 import Reveal from '../common/Reveal'
 import NavIcon from '../common/NavIcon'
+import { SITE_CONTAINER } from '../../utils/layout'
 
 function ContactSection({ config }) {
   const { footer, opdHours } = config
   const { t } = useLanguage()
   if (!footer?.address && !footer?.phone && !footer?.email && !opdHours?.length) return null
 
+  const mapsUrl = footer?.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(footer.address)}`
+    : null
+
   return (
-    <section id="contact" className="px-6 py-20 md:px-12">
+    <section id="contact" className={`py-20 ${SITE_CONTAINER}`}>
       <Reveal>
         <SectionEyebrow>{t('hospital.contact')}</SectionEyebrow>
         <h2 className="mt-3 text-3xl font-bold text-heading">{t('hospital.visitOrReachUs')}</h2>
@@ -63,10 +68,36 @@ function ContactSection({ config }) {
 
         <Reveal
           delay={120}
-          className="flex min-h-[220px] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-card text-center text-sm text-muted"
+          className="relative flex min-h-55 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-line bg-card text-center text-sm text-muted"
         >
-          <NavIcon name="map" className="h-6 w-6 text-faint" />
-          <span>{t('hospital.mapPlaceholder')}</span>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle, var(--tenant-primary) 1.5px, transparent 1.5px)',
+              backgroundSize: '18px 18px',
+            }}
+            aria-hidden="true"
+          />
+          <span
+            className="relative flex h-12 w-12 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary) 15%, transparent)', color: 'var(--tenant-primary)' }}
+          >
+            <NavIcon name="map" className="h-6 w-6" />
+          </span>
+          <span className="relative max-w-xs px-6">{footer?.address || t('hospital.mapPlaceholder')}</span>
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-colors"
+              style={{ color: 'var(--tenant-primary)' }}
+            >
+              <NavIcon name="pin" className="h-3.5 w-3.5" />
+              Open in Google Maps
+            </a>
+          )}
         </Reveal>
       </div>
     </section>

@@ -181,7 +181,65 @@ function HospitalDetailPage() {
               </button>
             </div>
 
-            <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-card shadow-sm">
+            {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
+            <div className="mt-3 space-y-3 md:hidden">
+              {staff.map((member) => (
+                <div key={member.uid} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-600 ring-1 ring-violet-500/20 ring-inset dark:text-violet-300">
+                        {(member.displayName || '?')[0].toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-heading">{member.displayName}</p>
+                        <p className="truncate text-xs text-faint">{member.email}</p>
+                      </div>
+                    </div>
+                    <StatusBadge status={member.status} kind="user" />
+                  </div>
+                  <span className="mt-3 inline-flex items-center rounded-lg bg-card-strong px-2.5 py-1 text-xs font-medium text-muted">
+                    {ROLE_LABELS[member.role] || member.role}
+                  </span>
+                  <div className="mt-3 flex flex-wrap items-center gap-1 border-t border-line pt-3">
+                    <Link
+                      to={`/superadmin/hospitals/${slug}/staff/${member.uid}`}
+                      className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300"
+                    >
+                      View profile
+                    </Link>
+                    <button
+                      onClick={() => handleResetPassword(member)}
+                      className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
+                    >
+                      {resetSentFor === member.uid ? 'Sent' : 'Reset password'}
+                    </button>
+                    <button
+                      onClick={() => setUserStatus(member.uid, member.status === 'active' ? 'disabled' : 'active')}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                        member.status === 'active'
+                          ? 'text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                          : 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+                      }`}
+                    >
+                      {member.status === 'active' ? 'Deactivate' : 'Reactivate'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {staff.length === 0 && (
+                <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
+                  <div className="flex flex-col items-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
+                      <NavIcon name="staff" className="h-6 w-6 text-faint" />
+                    </div>
+                    <p className="mt-3 text-sm font-medium text-muted">No staff assigned yet</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: full table */}
+            <div className="mt-3 hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
               <table className="min-w-full divide-y divide-line text-sm">
                 <thead>
                   <tr className="border-b border-line bg-card-strong/30">
@@ -214,6 +272,12 @@ function HospitalDetailPage() {
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Link
+                            to={`/superadmin/hospitals/${slug}/staff/${member.uid}`}
+                            className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-500/10 dark:text-indigo-300"
+                          >
+                            View profile
+                          </Link>
                           <button
                             onClick={() => handleResetPassword(member)}
                             className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-card-strong hover:text-heading"
