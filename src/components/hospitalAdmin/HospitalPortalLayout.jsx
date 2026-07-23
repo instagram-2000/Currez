@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { signOutUser } from '../../firebase/auth'
 import { useAuth } from '../../contexts/AuthContext'
 import { useFeatures } from '../../contexts/FeatureContext'
@@ -15,6 +15,7 @@ import MobileNavDrawer from '../common/MobileNavDrawer'
 
 function HospitalPortalLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, role, userDoc } = useAuth()
   const { isFeatureEnabled } = useFeatures()
   const { hospital, ready } = useHospitalData()
@@ -141,7 +142,7 @@ function HospitalPortalLayout() {
             <ThemeToggle />
             <span className="hidden text-sm text-muted lg:inline">{user?.email}</span>
             <button
-              onClick={() => signOutUser()}
+              onClick={() => signOutUser().then(() => navigate('/', { search: location.search }))}
               className="cursor-pointer rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-red-500/10 hover:text-red-600 sm:px-3 dark:hover:text-red-400"
             >
               Logout
