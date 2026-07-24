@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import Modal from '../common/Modal'
+import { formatBedLocation } from '../../utils/bedManagement'
 
 function AdmitPatientModal({ bed, config, patients, doctors, onAdmit, onClose }) {
   const [searchTerm, setSearchTerm] = useState('')
@@ -73,9 +74,12 @@ function AdmitPatientModal({ bed, config, patients, doctors, onAdmit, onClose })
   return (
     <Modal onClose={onClose} className="max-w-lg">
       <h2 className="mb-1 text-lg font-bold text-heading">Admit Patient</h2>
-      <p className="mb-5 text-sm text-muted">
-        {bed?.bedId} — {bedType.label} — ₹{bedType.ratePerDay.toLocaleString('en-IN')}/day
-      </p>
+      <div className="mb-5">
+        <p className="text-sm text-muted">
+          Bed {bed?.bedId} — {bedType.label} — ₹{bedType.ratePerDay.toLocaleString('en-IN')}/day
+        </p>
+        {bed && formatBedLocation(bed) && <p className="text-xs text-faint">{formatBedLocation(bed)}</p>}
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {!isNewPatient ? (

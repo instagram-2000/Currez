@@ -12,12 +12,13 @@ import {
   updateBedConfig,
 } from '../../firebase/bedManagement'
 import { autoCreateDischargeInvoice } from '../../firebase/billing'
-import { flattenBeds, computeOccupancyStats, getAdmissionForBed } from '../../utils/bedManagement'
+import { flattenBeds, computeOccupancyStats, setBedStatusInConfig } from '../../utils/bedManagement'
 import BedGrid from '../../components/hospitalAdmin/BedGrid'
 import BedStatsPanel from '../../components/hospitalAdmin/BedStatsPanel'
+import FloorTabs from '../../components/hospitalAdmin/FloorTabs'
 import AdmitPatientModal from '../../components/hospitalAdmin/AdmitPatientModal'
 import DischargeModal from '../../components/hospitalAdmin/DischargeModal'
-import BedConfigEditor from '../../components/hospitalAdmin/BedConfigEditor'
+import BedConfigBuilder from '../../components/hospitalAdmin/BedConfigBuilder'
 import { PageSpinner } from '../../components/common/Spinner'
 
 function BedManagementPage({ tenantSlug }) {
@@ -30,7 +31,7 @@ function BedManagementPage({ tenantSlug }) {
   const [activeAdmissions, setActiveAdmissions] = useState(null)
   const [selectedFloorId, setSelectedFloorId] = useState(null)
   const [wardFilter, setWardFilter] = useState(null)
-  const [showConfigEditor, setShowConfigEditor] = useState(false)
+  const [view, setView] = useState('grid') // 'grid' | 'configure'
   const [admitModal, setAdmitModal] = useState(null)
   const [dischargeModal, setDischargeModal] = useState(null)
 
@@ -44,6 +45,10 @@ function BedManagementPage({ tenantSlug }) {
     return unsub
   }, [tenantSlug])
 
+  useEffect(() => {
+    setWardFilter(null)
+  }, [selectedFloorId])
+
   const doctors = useMemo(
     () => (staff || []).filter((s) => s.role === 'DOCTOR' && s.status === 'active'),
     [staff]
@@ -51,6 +56,7 @@ function BedManagementPage({ tenantSlug }) {
 
   const allBeds = useMemo(() => flattenBeds(config), [config])
   const stats = useMemo(() => computeOccupancyStats(allBeds, activeAdmissions || []), [allBeds, activeAdmissions])
+  const selectedFloor = (config?.floors || []).find((f) => f.id === selectedFloorId) || null
 
   function handleBedSelect(bed, admission) {
     if (admission) {
@@ -116,8 +122,25 @@ function BedManagementPage({ tenantSlug }) {
     }
   }
 
+  async function handleToggleMaintenance(bed, status) {
+    if (!config) return
+    const nextConfig = setBedStatusInConfig(config, bed.floorId, bed.wardId, bed.roomId, bed.bedId, status)
+    await updateBedConfig(tenantSlug, nextConfig, user.email)
+  }
+
   if (config === undefined || activeAdmissions === null) {
     return <PageSpinner />
+  }
+
+  if (view === 'configure') {
+    return (
+      <BedConfigBuilder
+        config={config}
+        activeAdmissions={activeAdmissions}
+        onSave={handleSaveConfig}
+        onClose={() => setView('grid')}
+      />
+    )
   }
 
   return (
@@ -130,10 +153,10 @@ function BedManagementPage({ tenantSlug }) {
         </div>
         {isAdmin && (
           <button
-            onClick={() => setShowConfigEditor(true)}
+            onClick={() => setView('configure')}
             className="self-start rounded-xl border border-line bg-card px-4 py-2 text-sm font-medium text-heading transition-colors hover:bg-card-strong"
           >
-            Configure
+            Configure Beds
           </button>
         )}
       </div>
@@ -144,25 +167,44 @@ function BedManagementPage({ tenantSlug }) {
         <aside className="w-full shrink-0 rounded-2xl border border-line/80 bg-surface p-4 lg:w-64">
           <BedStatsPanel
             stats={stats}
-            floors={config?.floors || []}
-            selectedFloorId={selectedFloorId}
-            onSelectFloor={setSelectedFloorId}
-            wardFilter={wardFilter}
-            onWardFilterChange={setWardFilter}
             allBeds={allBeds}
             activeAdmissions={activeAdmissions || []}
             onBedSelect={handleBedSelect}
           />
         </aside>
 
-        {/* Bed grid */}
-        <div className="min-w-0 flex-1">
+        {/* Floor tabs + ward filter + bed grid */}
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <FloorTabs
+            floors={config?.floors || []}
+            allBeds={allBeds}
+            activeAdmissions={activeAdmissions || []}
+            selectedFloorId={selectedFloorId}
+            onSelectFloor={setSelectedFloorId}
+          />
+
+          {selectedFloor && selectedFloor.wards?.length > 0 && (
+            <div className="-mt-1 flex flex-wrap gap-1.5">
+              <WardPill active={!wardFilter} onClick={() => setWardFilter(null)} label="All Wards" />
+              {selectedFloor.wards.map((ward) => (
+                <WardPill
+                  key={ward.id}
+                  active={wardFilter === ward.id}
+                  onClick={() => setWardFilter(ward.id)}
+                  label={ward.name}
+                />
+              ))}
+            </div>
+          )}
+
           <BedGrid
             floors={config?.floors || []}
             activeAdmissions={activeAdmissions}
             selectedFloorId={selectedFloorId}
             wardFilter={wardFilter}
             onBedSelect={handleBedSelect}
+            canManage
+            onToggleMaintenance={handleToggleMaintenance}
           />
         </div>
       </div>
@@ -186,15 +228,23 @@ function BedManagementPage({ tenantSlug }) {
           onClose={() => setDischargeModal(null)}
         />
       )}
-
-      {showConfigEditor && (
-        <BedConfigEditor
-          config={config}
-          onSave={handleSaveConfig}
-          onClose={() => setShowConfigEditor(false)}
-        />
-      )}
     </div>
+  )
+}
+
+function WardPill({ active, onClick, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+        active
+          ? 'bg-indigo-500/15 text-indigo-600 ring-1 ring-inset ring-indigo-500/25 dark:text-indigo-300'
+          : 'text-muted hover:bg-card-strong hover:text-heading'
+      }`}
+    >
+      {label}
+    </button>
   )
 }
 

@@ -31,6 +31,7 @@ const PATHS = {
   prescription: 'M4.93 19.07a5 5 0 0 1 0-7.07l7.07-7.07a5 5 0 0 1 7.07 7.07l-7.07 7.07a5 5 0 0 1-7.07 0z M9 9l6 6',
   analytics: 'M3 3v18h18 M7 16l4-6 4 4 4-8',
   bed: 'M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7h18M3 7l1.5-3h15L21 7 M7 11h.01 M12 11h.01 M17 11h.01',
+  trash: 'M4 7h16 M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3 M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13 M10 11v6 M14 11v6',
 }
 
 function NavIcon({ name, className = 'h-4.5 w-4.5' }) {

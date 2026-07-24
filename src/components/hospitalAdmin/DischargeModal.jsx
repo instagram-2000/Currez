@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Modal from '../common/Modal'
-import { computeDaysSince, computeRunningCharges } from '../../utils/bedManagement'
+import { computeDaysSince, computeRunningCharges, formatBedLocation } from '../../utils/bedManagement'
 import { useFeature } from '../../hooks/useFeature'
 
 function DischargeModal({ admission, onDischarge, onClose }) {
@@ -48,7 +48,8 @@ function DischargeModal({ admission, onDischarge, onClose }) {
           <div>
             <div className="font-semibold text-heading">{admission.patientName}</div>
             <div className="text-xs text-muted">
-              {admission.bedId} — {admission.wardName}, {admission.roomName}
+              Bed {admission.bedId}
+              {formatBedLocation(admission) && <> — {formatBedLocation(admission)}</>}
             </div>
           </div>
         </div>
