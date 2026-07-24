@@ -12,6 +12,7 @@ import ConfirmPaymentModal from '../../components/hospitalAdmin/ConfirmPaymentMo
 import CompleteVisitModal from '../../components/hospitalAdmin/CompleteVisitModal'
 import RescheduleAppointmentModal from '../../components/hospitalAdmin/RescheduleAppointmentModal'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 
 const STATUS_STYLES = {
   pending: 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-400',
@@ -57,11 +58,14 @@ function AppointmentsPage({ tenantSlug }) {
   const { appointments: allAppointments, patients, staff } = useHospitalData()
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState(TAB_TODAY)
+  const [currentPage, setCurrentPage] = useState(1)
   const [showBookModal, setShowBookModal] = useState(false)
   const [confirmingAppointment, setConfirmingAppointment] = useState(null)
   const [completingAppt, setCompletingAppt] = useState(null)
   const [viewingAppt, setViewingAppt] = useState(null)
   const [reschedulingAppt, setReschedulingAppt] = useState(null)
+
+  const PAGE_SIZE = 10
 
   // The shared context holds a much wider window (365 days back, unbounded
   // forward) than this page needs — narrow it to the ±7 day operational
@@ -98,6 +102,23 @@ function AppointmentsPage({ tenantSlug }) {
   }, [appointments, isDoctor, user.uid, search])
 
   const categorized = useMemo(() => categorizeAppointments(visible), [visible])
+
+  const tabItems = useMemo(() => categorized[activeTab] || [], [categorized, activeTab])
+  const totalPages = Math.ceil(tabItems.length / PAGE_SIZE)
+  const paginatedItems = useMemo(
+    () => tabItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [tabItems, currentPage]
+  )
+
+  // Reset to page 1 when search or tab changes
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    setCurrentPage(1)
+  }
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
 
   // Shared between the desktop table row and the mobile card so the two
   // views can never drift out of sync on which actions are available.
@@ -176,7 +197,7 @@ function AppointmentsPage({ tenantSlug }) {
         type="text"
         placeholder="Search by patient name or phone..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={handleSearchChange}
         className="w-full max-w-sm rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
       />
 
@@ -184,7 +205,7 @@ function AppointmentsPage({ tenantSlug }) {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === tab.key
                 ? 'bg-card text-heading shadow-sm'
@@ -206,7 +227,7 @@ function AppointmentsPage({ tenantSlug }) {
       {/* Mobile: stacked cards instead of a horizontally-scrolling table —
           one card per appointment, same data and actions as the table below. */}
       <div className="space-y-3 md:hidden">
-        {(categorized[activeTab] || []).map((appt) => (
+        {paginatedItems.map((appt) => (
           <div key={appt.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -244,7 +265,7 @@ function AppointmentsPage({ tenantSlug }) {
             </div>
           </div>
         ))}
-        {(categorized[activeTab] || []).length === 0 && (
+        {tabItems.length === 0 && (
           <div className="rounded-2xl border border-line bg-card px-5 py-16 text-center">
             <div className="flex flex-col items-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-strong">
@@ -256,6 +277,15 @@ function AppointmentsPage({ tenantSlug }) {
           </div>
         )}
       </div>
+
+      {tabItems.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={tabItems.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
@@ -272,7 +302,7 @@ function AppointmentsPage({ tenantSlug }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {(categorized[activeTab] || []).map((appt) => (
+            {paginatedItems.map((appt) => (
               <tr key={appt.id} className="group transition-colors hover:bg-card-strong/50">
                 <td className="whitespace-nowrap px-5 py-3.5">
                   <span className="font-medium text-heading">{appt.date}</span>
@@ -309,7 +339,7 @@ function AppointmentsPage({ tenantSlug }) {
                 </td>
               </tr>
             ))}
-            {(categorized[activeTab] || []).length === 0 && (
+            {tabItems.length === 0 && (
               <tr>
                 <td colSpan={isDoctor ? 5 : 7} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center">

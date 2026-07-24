@@ -6,6 +6,7 @@ import { canEditModule } from '../../utils/permissions'
 import PatientFormModal from '../../components/hospitalAdmin/PatientFormModal'
 import BookAppointmentModal from '../../components/hospitalAdmin/BookAppointmentModal'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 
 function PatientsPage({ tenantSlug }) {
   const { userDoc } = useAuth()
@@ -14,6 +15,9 @@ function PatientsPage({ tenantSlug }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [bookingForPatientId, setBookingForPatientId] = useState(null)
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const PAGE_SIZE = 10
 
   const doctors = staff.filter((s) => s.role === ROLES.DOCTOR && s.status === 'active')
 
@@ -24,6 +28,16 @@ function PatientsPage({ tenantSlug }) {
       (p) => p.name?.toLowerCase().includes(q) || p.phone?.toLowerCase().includes(q)
     )
   }, [patients, search])
+
+  const paginatedPatients = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  )
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    setCurrentPage(1)
+  }
 
   return (
     <div className="space-y-6">
@@ -47,13 +61,13 @@ function PatientsPage({ tenantSlug }) {
         type="text"
         placeholder="Search by patient name or phone..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={handleSearchChange}
         className="w-full max-w-sm rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
       />
 
       {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
       <div className="space-y-3 md:hidden">
-        {filtered.map((patient) => (
+        {paginatedPatients.map((patient) => (
           <div key={patient.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-600 ring-1 ring-inset ring-indigo-500/20 dark:text-indigo-300">
@@ -86,6 +100,15 @@ function PatientsPage({ tenantSlug }) {
         )}
       </div>
 
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
@@ -98,7 +121,7 @@ function PatientsPage({ tenantSlug }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {filtered.map((patient) => (
+            {paginatedPatients.map((patient) => (
               <tr key={patient.id} className="group transition-colors hover:bg-card-strong/50">
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">

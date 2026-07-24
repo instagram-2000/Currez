@@ -15,6 +15,7 @@ import StatCard from '../../components/superadmin/StatCard'
 import StatusBadge from '../../components/superadmin/StatusBadge'
 import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 import TenantNotFound from '../TenantNotFound'
 
 const TABS = [
@@ -35,6 +36,9 @@ function HospitalDetailPage() {
   const [newCredentials, setNewCredentials] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [resetSentFor, setResetSentFor] = useState(null)
+  const [staffPage, setStaffPage] = useState(1)
+
+  const STAFF_PAGE_SIZE = 10
 
   useEffect(() => subscribeHospital(slug, setHospital), [slug])
   useEffect(() => subscribeUsersByHospital(slug, setStaff), [slug])
@@ -183,7 +187,7 @@ function HospitalDetailPage() {
 
             {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
             <div className="mt-3 space-y-3 md:hidden">
-              {staff.map((member) => (
+              {staff.slice((staffPage - 1) * STAFF_PAGE_SIZE, staffPage * STAFF_PAGE_SIZE).map((member) => (
                 <div key={member.uid} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -238,6 +242,15 @@ function HospitalDetailPage() {
               )}
             </div>
 
+            {staff.length > 0 && (
+              <Pagination
+                currentPage={staffPage}
+                totalItems={staff.length}
+                pageSize={STAFF_PAGE_SIZE}
+                onPageChange={setStaffPage}
+              />
+            )}
+
             {/* Desktop: full table */}
             <div className="mt-3 hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
               <table className="min-w-full divide-y divide-line text-sm">
@@ -251,7 +264,7 @@ function HospitalDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
-                  {staff.map((member) => (
+                  {staff.slice((staffPage - 1) * STAFF_PAGE_SIZE, staffPage * STAFF_PAGE_SIZE).map((member) => (
                     <tr key={member.uid} className="group transition-colors hover:bg-card-strong/50">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">

@@ -15,6 +15,7 @@ import DoctorScheduleEditor from "../../components/hospitalAdmin/DoctorScheduleE
 import StaffPermissionsModal from "../../components/hospitalAdmin/StaffPermissionsModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import NavIcon from "../../components/common/NavIcon";
+import Pagination from "../../components/common/Pagination";
 
 function StaffPage({ tenantSlug }) {
   const { enabled: billingEnabled } = useFeature("billing");
@@ -26,6 +27,9 @@ function StaffPage({ tenantSlug }) {
   const [resetSentFor, setResetSentFor] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const PAGE_SIZE = 10;
 
   async function executeResetPassword(member) {
     setResetSentFor(null);
@@ -55,6 +59,11 @@ function StaffPage({ tenantSlug }) {
   const activeStaff = allStaff.filter((s) => s.status === "active");
   const inactiveStaff = allStaff.filter((s) => s.status !== "active");
   const visibleStaff = showInactive ? allStaff : activeStaff;
+
+  const paginatedStaff = visibleStaff.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   // Shared between the desktop table row and the mobile card.
   function renderActions(member) {
@@ -151,7 +160,7 @@ function StaffPage({ tenantSlug }) {
 
       {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
       <div className="space-y-3 md:hidden">
-        {visibleStaff.map((member) => (
+        {paginatedStaff.map((member) => (
           <div
             key={member.uid}
             className={`rounded-2xl border border-line bg-card p-4 shadow-sm ${
@@ -199,6 +208,15 @@ function StaffPage({ tenantSlug }) {
         )}
       </div>
 
+      {visibleStaff.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={visibleStaff.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
@@ -212,7 +230,7 @@ function StaffPage({ tenantSlug }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {visibleStaff.map((member) => (
+            {paginatedStaff.map((member) => (
               <tr
                 key={member.uid}
                 className={`group transition-colors hover:bg-card-strong/50 ${

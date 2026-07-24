@@ -4,6 +4,7 @@ import { useHospitalData } from '../../contexts/HospitalDataContext'
 import { ROLES } from '../../utils/roles'
 import PrescriptionDocument from '../../components/hospitalAdmin/PrescriptionDocument'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 
 // Deliberately reads straight off `appointments` (via the same shared
 // HospitalDataContext window used everywhere else) instead of a dedicated
@@ -19,6 +20,9 @@ function PrescriptionsPage() {
   const [search, setSearch] = useState('')
   const [doctorFilter, setDoctorFilter] = useState('all')
   const [viewingId, setViewingId] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const PAGE_SIZE = 10
 
   const doctorsById = useMemo(
     () => Object.fromEntries(staff.filter((s) => s.role === ROLES.DOCTOR).map((d) => [d.uid, d])),
@@ -45,6 +49,20 @@ function PrescriptionsPage() {
     return list.sort((a, b) => `${b.date}T${b.time || ''}`.localeCompare(`${a.date}T${a.time || ''}`))
   }, [appointments, isDoctor, user?.uid, doctorFilter, search])
 
+  const paginatedVisible = useMemo(
+    () => visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [visible, currentPage]
+  )
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    setCurrentPage(1)
+  }
+  const handleDoctorFilterChange = (e) => {
+    setDoctorFilter(e.target.value)
+    setCurrentPage(1)
+  }
+
   const viewingAppointment = viewingId ? visible.find((a) => a.id === viewingId) || null : null
 
   return (
@@ -61,13 +79,13 @@ function PrescriptionsPage() {
           type="text"
           placeholder="Search by patient name or phone..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
           className="w-full max-w-sm rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
         />
         {!isDoctor && (
           <select
             value={doctorFilter}
-            onChange={(e) => setDoctorFilter(e.target.value)}
+            onChange={handleDoctorFilterChange}
             className="cursor-pointer rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-heading focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
           >
             <option value="all">All doctors</option>
@@ -82,7 +100,7 @@ function PrescriptionsPage() {
 
       {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
       <div className="space-y-3 md:hidden">
-        {visible.map((appt) => (
+        {paginatedVisible.map((appt) => (
           <div key={appt.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -128,6 +146,15 @@ function PrescriptionsPage() {
         )}
       </div>
 
+      {visible.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={visible.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
@@ -142,7 +169,7 @@ function PrescriptionsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {visible.map((appt) => (
+            {paginatedVisible.map((appt) => (
               <tr key={appt.id} className="group transition-colors hover:bg-card-strong/50">
                 <td className="px-5 py-3.5 whitespace-nowrap text-muted">
                   {appt.date}

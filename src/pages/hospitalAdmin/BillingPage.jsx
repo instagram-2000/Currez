@@ -10,6 +10,7 @@ import InvoiceDetailModal from '../../components/hospitalAdmin/InvoiceDetailModa
 import StatCard from '../../components/superadmin/StatCard'
 import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 
 const STATUS_STYLES = {
   due: 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-400',
@@ -42,8 +43,11 @@ function BillingPage({ tenantSlug }) {
   const [invoices, setInvoices] = useState(null)
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [viewingInvoiceId, setViewingInvoiceId] = useState(null)
+
+  const PAGE_SIZE = 10
   // Derived from the live `invoices` subscription rather than storing the
   // clicked-row object directly — otherwise recording a payment or voiding
   // from inside the modal would update Firestore but leave the open modal
@@ -77,6 +81,21 @@ function BillingPage({ tenantSlug }) {
     }
     return list
   }, [invoices, activeTab, search])
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginatedInvoices = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  )
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    setCurrentPage(1)
+  }
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
 
   const stats = useMemo(() => {
     if (!invoices) return { todaysCollection: 0, outstandingDue: 0, totalInvoices: 0 }
@@ -134,7 +153,7 @@ function BillingPage({ tenantSlug }) {
         type="text"
         placeholder="Search by patient name or phone..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={handleSearchChange}
         className="w-full max-w-sm rounded-xl border border-line bg-card px-4 py-2.5 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
       />
 
@@ -142,7 +161,7 @@ function BillingPage({ tenantSlug }) {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === tab.key ? 'bg-card text-heading shadow-sm' : 'text-muted hover:text-heading'
             }`}
@@ -163,7 +182,7 @@ function BillingPage({ tenantSlug }) {
 
       {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
       <div className="space-y-3 md:hidden">
-        {filtered.map((invoice) => (
+        {paginatedInvoices.map((invoice) => (
           <div key={invoice.id} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -217,6 +236,15 @@ function BillingPage({ tenantSlug }) {
         )}
       </div>
 
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
@@ -231,7 +259,7 @@ function BillingPage({ tenantSlug }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {filtered.map((invoice) => (
+            {paginatedInvoices.map((invoice) => (
               <tr key={invoice.id} className="group transition-colors hover:bg-card-strong/50">
                 <td className="px-5 py-3.5 whitespace-nowrap text-muted">{invoice.date || '—'}</td>
                 <td className="px-5 py-3.5">

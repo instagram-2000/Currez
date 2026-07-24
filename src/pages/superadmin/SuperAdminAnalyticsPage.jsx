@@ -8,6 +8,7 @@ import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
 import StatusBadge from '../../components/superadmin/StatusBadge'
 import Modal from '../../components/common/Modal'
+import Pagination from '../../components/common/Pagination'
 
 const RANGE_OPTIONS = [
   { key: 'today', label: 'Today', days: 0 },
@@ -246,6 +247,9 @@ function HospitalRankingModal({ hospitalStats, onClose }) {
 function AppointmentsModal({ appointments, onClose, initialStatus }) {
   const [filter, setFilter] = useState(initialStatus || 'all')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const MODAL_PAGE_SIZE = 20
 
   const tabs = [
     { key: 'all', label: 'All', count: appointments.length },
@@ -269,6 +273,11 @@ function AppointmentsModal({ appointments, onClose, initialStatus }) {
     }
     return list
   }, [appointments, filter, search])
+
+  const paginatedFiltered = useMemo(
+    () => filtered.slice((currentPage - 1) * MODAL_PAGE_SIZE, currentPage * MODAL_PAGE_SIZE),
+    [filtered, currentPage]
+  )
 
   const handleExport = () => {
     const headers = ['Hospital', 'Date', 'Time', 'Patient', 'Phone', 'Doctor', 'Status']
@@ -322,7 +331,7 @@ function AppointmentsModal({ appointments, onClose, initialStatus }) {
           <div className="py-12 text-center text-sm text-muted">No appointments found</div>
         ) : (
           <div className="space-y-2">
-            {filtered.slice(0, 100).map((a) => (
+            {paginatedFiltered.map((a) => (
               <div key={a.id} className="flex items-center gap-3 rounded-xl border border-line/50 bg-card-strong/30 px-4 py-3 transition-colors hover:bg-card-strong/60">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_DOTS[a.status]}`} />
                 <div className="min-w-0 flex-1">
@@ -338,9 +347,14 @@ function AppointmentsModal({ appointments, onClose, initialStatus }) {
                 </div>
               </div>
             ))}
-            {filtered.length > 100 && (
-              <p className="text-center text-xs text-faint py-2">Showing 100 of {filtered.length} — export CSV for full data</p>
-            )}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filtered.length}
+                pageSize={MODAL_PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -350,6 +364,9 @@ function AppointmentsModal({ appointments, onClose, initialStatus }) {
 
 function RevenueModal({ invoices, onClose }) {
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const MODAL_PAGE_SIZE = 20
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -362,6 +379,11 @@ function RevenueModal({ invoices, onClose }) {
         i.hospitalId?.toLowerCase().includes(q)
     )
   }, [invoices, search])
+
+  const paginatedFiltered = useMemo(
+    () => filtered.slice((currentPage - 1) * MODAL_PAGE_SIZE, currentPage * MODAL_PAGE_SIZE),
+    [filtered, currentPage]
+  )
 
   const totals = useMemo(() => ({
     total: filtered.reduce((s, i) => s + (i.total || 0), 0),
@@ -419,7 +441,7 @@ function RevenueModal({ invoices, onClose }) {
           <div className="py-12 text-center text-sm text-muted">No invoices found</div>
         ) : (
           <div className="space-y-2">
-            {filtered.slice(0, 100).map((inv) => (
+            {paginatedFiltered.map((inv) => (
               <div key={inv.id} className="rounded-xl border border-line/50 bg-card-strong/30 px-4 py-3 transition-colors hover:bg-card-strong/60">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -443,9 +465,14 @@ function RevenueModal({ invoices, onClose }) {
                 </div>
               </div>
             ))}
-            {filtered.length > 100 && (
-              <p className="text-center text-xs text-faint py-2">Showing 100 of {filtered.length} — export CSV for full data</p>
-            )}
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filtered.length}
+                pageSize={MODAL_PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </div>
           </div>
         )}
       </div>

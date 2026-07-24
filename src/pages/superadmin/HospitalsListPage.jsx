@@ -5,6 +5,7 @@ import StatusBadge from '../../components/superadmin/StatusBadge'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import { PageSpinner } from '../../components/common/Spinner'
 import NavIcon from '../../components/common/NavIcon'
+import Pagination from '../../components/common/Pagination'
 
 function HospitalsListPage() {
   const [hospitals, setHospitals] = useState(null)
@@ -12,6 +13,9 @@ function HospitalsListPage() {
   const [pendingDelete, setPendingDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const PAGE_SIZE = 10
 
   useEffect(() => subscribeHospitals(setHospitals), [])
 
@@ -23,6 +27,16 @@ function HospitalsListPage() {
       (h) => h.title?.toLowerCase().includes(q) || h.slug.toLowerCase().includes(q)
     )
   }, [hospitals, search])
+
+  const paginatedHospitals = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  )
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value)
+    setCurrentPage(1)
+  }
 
   async function handleDelete() {
     setDeleting(true)
@@ -61,14 +75,14 @@ function HospitalsListPage() {
           type="text"
           placeholder="Search by name or slug…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={handleSearchChange}
           className="w-full rounded-xl border border-line bg-card py-2.5 pr-4 pl-9 text-sm text-heading placeholder:text-faint focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
         />
       </div>
 
       {/* Mobile: stacked cards instead of a horizontally-scrolling table. */}
       <div className="space-y-3 md:hidden">
-        {filtered.map((hospital) => (
+        {paginatedHospitals.map((hospital) => (
           <div key={hospital.slug} className="rounded-2xl border border-line bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -126,6 +140,15 @@ function HospitalsListPage() {
         )}
       </div>
 
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Desktop: full table */}
       <div className="hidden overflow-x-auto rounded-2xl border border-line bg-card shadow-sm md:block">
         <table className="min-w-full divide-y divide-line text-sm">
@@ -138,7 +161,7 @@ function HospitalsListPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {filtered.map((hospital) => (
+            {paginatedHospitals.map((hospital) => (
               <tr key={hospital.slug} className="group transition-colors hover:bg-card-strong/50">
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
