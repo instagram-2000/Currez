@@ -1,7 +1,7 @@
 import BedBlock from './BedBlock'
 import { bedKey } from '../../utils/bedManagement'
 
-function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedSelect, selectedBedId, statusFilter }) {
+function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedSelect, selectedBedId }) {
   const occupiedMap = new Map()
   for (const admission of activeAdmissions) {
     if (admission.status === 'active' && admission.floorId && admission.wardId && admission.roomId && admission.bedId) {
@@ -62,8 +62,6 @@ function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedS
                             const key = bedKey(floor.id, ward.id, room.id, bed.bedId)
                             const admission = occupiedMap.get(key) || null
                             const isOccupied = !!admission
-                            if (statusFilter === 'vacant' && isOccupied) return null
-                            if (statusFilter === 'occupied' && !isOccupied) return null
                             return (
                               <BedBlock
                                 key={bed.bedId}

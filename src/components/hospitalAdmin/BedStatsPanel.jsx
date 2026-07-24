@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Modal from '../common/Modal'
 
 function BedStatsPanel({
   stats,
@@ -7,26 +8,13 @@ function BedStatsPanel({
   onSelectFloor,
   wardFilter,
   onWardFilterChange,
-  statusFilter,
-  onStatusFilterChange,
   allBeds,
   activeAdmissions,
   onBedSelect,
 }) {
-  const [expandedStatus, setExpandedStatus] = useState(null)
+  const [modalStatus, setModalStatus] = useState(null)
 
   const selectedFloor = floors?.find((f) => f.id === selectedFloorId)
-
-  function handleStatClick(type) {
-    if (type === 'rate') return
-    if (statusFilter === type) {
-      onStatusFilterChange(null)
-      setExpandedStatus(null)
-    } else {
-      onStatusFilterChange(type)
-      setExpandedStatus(type)
-    }
-  }
 
   function findAdmission(bed) {
     return (
@@ -41,13 +29,19 @@ function BedStatsPanel({
     )
   }
 
-  const filteredBeds = expandedStatus
+  const modalBeds = modalStatus
     ? allBeds.filter((b) => {
-        if (expandedStatus === 'occupied') return !!findAdmission(b)
-        if (expandedStatus === 'vacant') return !findAdmission(b)
+        if (modalStatus === 'occupied') return !!findAdmission(b)
+        if (modalStatus === 'vacant') return !findAdmission(b)
         return true
       })
     : []
+
+  function handleBedClick(bed) {
+    const admission = findAdmission(bed)
+    setModalStatus(null)
+    onBedSelect?.(bed, admission)
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -55,88 +49,22 @@ function BedStatsPanel({
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-faint">Occupancy</h3>
         <div className="grid grid-cols-2 gap-2">
           <StatCard
-            label="Total"
-            value={stats.total}
-            color="text-heading"
-            active={statusFilter === 'total'}
-            onClick={() => handleStatClick('total')}
-          />
-          <StatCard
             label="Occupied"
             value={stats.occupied}
             color="text-red-600 dark:text-red-400"
-            active={statusFilter === 'occupied'}
-            onClick={() => handleStatClick('occupied')}
+            onClick={() => setModalStatus('occupied')}
           />
           <StatCard
             label="Vacant"
             value={stats.vacant}
             color="text-emerald-600 dark:text-emerald-400"
-            active={statusFilter === 'vacant'}
-            onClick={() => handleStatClick('vacant')}
+            onClick={() => setModalStatus('vacant')}
           />
-          <StatCard label="Rate" value={`${stats.occupancyRate}%`} color="text-indigo-600 dark:text-indigo-300" />
+        </div>
+        <div className="mt-2 text-center text-[11px] text-muted">
+          {stats.total} total &middot; {stats.occupancyRate}% occupancy
         </div>
       </div>
-
-      {expandedStatus && filteredBeds.length > 0 && (
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-faint">
-              {expandedStatus === 'total' && 'All Beds'}
-              {expandedStatus === 'occupied' && 'Occupied Beds'}
-              {expandedStatus === 'vacant' && 'Vacant Beds'}
-            </h3>
-            <button
-              type="button"
-              onClick={() => {
-                setExpandedStatus(null)
-                onStatusFilterChange(null)
-              }}
-              className="text-[10px] font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-300"
-            >
-              Clear
-            </button>
-          </div>
-          <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
-            {filteredBeds.map((bed) => {
-              const admission = findAdmission(bed)
-              const isOccupied = !!admission
-              return (
-                <button
-                  key={`${bed.floorId}/${bed.wardId}/${bed.roomId}/${bed.bedId}`}
-                  type="button"
-                  onClick={() => onBedSelect?.(bed, admission)}
-                  className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                    isOccupied
-                      ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'
-                      : 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-heading">{bed.bedId}</span>
-                    <span
-                      className={`text-[9px] font-semibold uppercase ${
-                        isOccupied ? 'text-red-500' : 'text-emerald-500'
-                      }`}
-                    >
-                      {isOccupied ? 'Occupied' : 'Vacant'}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-muted">
-                    {bed.floorName} &middot; {bed.wardName} &middot; {bed.roomName}
-                  </div>
-                  {isOccupied && admission.patientName && (
-                    <div className="mt-1 text-[10px] font-medium text-heading">
-                      {admission.patientName}
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {Object.keys(stats.byWard).length > 0 && (
         <div>
@@ -231,22 +159,71 @@ function BedStatsPanel({
           </div>
         </div>
       </div>
+
+      {modalStatus && (
+        <Modal onClose={() => setModalStatus(null)} className="max-w-lg">
+          <h2 className="mb-1 text-lg font-bold text-heading">
+            {modalStatus === 'occupied' ? 'Occupied Beds' : 'Vacant Beds'}
+          </h2>
+          <p className="mb-4 text-xs text-muted">
+            {modalBeds.length} bed{modalBeds.length !== 1 ? 's' : ''} &middot; Click a bed to {modalStatus === 'occupied' ? 'discharge' : 'admit'}
+          </p>
+
+          {modalBeds.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">
+              {modalStatus === 'occupied' ? 'No beds are currently occupied.' : 'No vacant beds available.'}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5 max-h-[60vh] overflow-y-auto">
+              {modalBeds.map((bed) => {
+                const admission = findAdmission(bed)
+                const isOccupied = !!admission
+                return (
+                  <button
+                    key={`${bed.floorId}/${bed.wardId}/${bed.roomId}/${bed.bedId}`}
+                    type="button"
+                    onClick={() => handleBedClick(bed)}
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                      isOccupied
+                        ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/30'
+                        : 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-heading">{bed.bedId}</span>
+                      <span
+                        className={`text-[10px] font-semibold uppercase ${
+                          isOccupied ? 'text-red-500' : 'text-emerald-500'
+                        }`}
+                      >
+                        {isOccupied ? 'Occupied' : 'Vacant'}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-muted">
+                      {bed.floorName} &middot; {bed.wardName} &middot; {bed.roomName}
+                    </div>
+                    {isOccupied && admission.patientName && (
+                      <div className="mt-1.5 text-xs font-medium text-heading">
+                        {admission.patientName}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </Modal>
+      )}
     </div>
   )
 }
 
-function StatCard({ label, value, color, active, onClick }) {
-  const isClickable = !!onClick
+function StatCard({ label, value, color, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={!isClickable}
-      className={`rounded-xl border p-3 text-center transition-all ${
-        active
-          ? 'border-indigo-500/50 bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/25'
-          : 'border-line/80 bg-card'
-      } ${isClickable ? 'cursor-pointer hover:border-indigo-500/30 hover:bg-indigo-500/5' : 'cursor-default'}`}
+      className="cursor-pointer rounded-xl border border-line/80 bg-card p-3 text-center transition-all hover:border-indigo-500/30 hover:bg-indigo-500/5"
     >
       <div className={`text-lg font-bold ${color}`}>{value}</div>
       <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-faint">{label}</div>
