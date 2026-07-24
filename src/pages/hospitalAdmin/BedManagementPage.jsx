@@ -30,6 +30,7 @@ function BedManagementPage({ tenantSlug }) {
   const [activeAdmissions, setActiveAdmissions] = useState(null)
   const [selectedFloorId, setSelectedFloorId] = useState(null)
   const [wardFilter, setWardFilter] = useState(null)
+  const [statusFilter, setStatusFilter] = useState(null)
   const [showConfigEditor, setShowConfigEditor] = useState(false)
   const [admitModal, setAdmitModal] = useState(null)
   const [dischargeModal, setDischargeModal] = useState(null)
@@ -149,6 +150,10 @@ function BedManagementPage({ tenantSlug }) {
             onSelectFloor={setSelectedFloorId}
             wardFilter={wardFilter}
             onWardFilterChange={setWardFilter}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            allBeds={allBeds}
+            activeAdmissions={activeAdmissions || []}
           />
         </aside>
 
@@ -159,6 +164,7 @@ function BedManagementPage({ tenantSlug }) {
             activeAdmissions={activeAdmissions}
             selectedFloorId={selectedFloorId}
             wardFilter={wardFilter}
+            statusFilter={statusFilter}
             onBedSelect={handleBedSelect}
           />
         </div>

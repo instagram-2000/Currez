@@ -1,5 +1,12 @@
 import { todayDateString } from './dates'
 
+// Build a unique composite key for a bed's position in the hierarchy.
+// Beds with the same `bedId` can exist in different rooms — the composite
+// key ensures they are treated as distinct beds for occupancy tracking.
+export function bedKey(floorId, wardId, roomId, bedId) {
+  return `${floorId}/${wardId}/${roomId}/${bedId}`
+}
+
 // Flatten all beds from a bed config into a flat list with hierarchy info.
 export function flattenBeds(config) {
   if (!config?.floors) return []
@@ -24,25 +31,31 @@ export function flattenBeds(config) {
   return beds
 }
 
-// Build a Set of occupied bed IDs from active admissions.
-export function getOccupiedBedIds(activeAdmissions) {
-  return new Set(activeAdmissions.filter((a) => a.status === 'active').map((a) => a.bedId))
+// Build a Map of occupied beds keyed by composite position key → admission.
+export function getOccupiedMap(activeAdmissions) {
+  const map = new Map()
+  for (const a of activeAdmissions) {
+    if (a.status === 'active' && a.floorId && a.wardId && a.roomId && a.bedId) {
+      map.set(bedKey(a.floorId, a.wardId, a.roomId, a.bedId), a)
+    }
+  }
+  return map
 }
 
 // Compute occupancy stats from flat beds + active admissions.
 export function computeOccupancyStats(beds, activeAdmissions) {
-  const occupiedSet = getOccupiedBedIds(activeAdmissions)
+  const occupied = getOccupiedMap(activeAdmissions)
   const total = beds.length
-  const occupied = beds.filter((b) => occupiedSet.has(b.bedId)).length
-  const vacant = total - occupied
-  const occupancyRate = total > 0 ? Math.round((occupied / total) * 1000) / 10 : 0
+  const occupiedCount = beds.filter((b) => occupied.has(bedKey(b.floorId, b.wardId, b.roomId, b.bedId))).length
+  const vacant = total - occupiedCount
+  const occupancyRate = total > 0 ? Math.round((occupiedCount / total) * 1000) / 10 : 0
 
   const byWard = {}
   for (const bed of beds) {
     const key = bed.wardId
     if (!byWard[key]) byWard[key] = { name: bed.wardName, total: 0, occupied: 0 }
     byWard[key].total++
-    if (occupiedSet.has(bed.bedId)) byWard[key].occupied++
+    if (occupied.has(bedKey(bed.floorId, bed.wardId, bed.roomId, bed.bedId))) byWard[key].occupied++
   }
 
   const byType = {}
@@ -50,15 +63,16 @@ export function computeOccupancyStats(beds, activeAdmissions) {
     const key = bed.type || 'unspecified'
     if (!byType[key]) byType[key] = { count: 0, occupied: 0 }
     byType[key].count++
-    if (occupiedSet.has(bed.bedId)) byType[key].occupied++
+    if (occupied.has(bedKey(bed.floorId, bed.wardId, bed.roomId, bed.bedId))) byType[key].occupied++
   }
 
-  return { total, occupied, vacant, occupancyRate, byWard, byType }
+  return { total, occupied: occupiedCount, vacant, occupancyRate, byWard, byType }
 }
 
 // Get the admission record for a specific bed (or null).
-export function getAdmissionForBed(bedId, activeAdmissions) {
-  return activeAdmissions.find((a) => a.bedId === bedId && a.status === 'active') || null
+export function getAdmissionForBed(floorId, wardId, roomId, bedId, activeAdmissions) {
+  const key = bedKey(floorId, wardId, roomId, bedId)
+  return activeAdmissions.find((a) => a.status === 'active' && bedKey(a.floorId, a.wardId, a.roomId, a.bedId) === key) || null
 }
 
 // Compute days since admission.
@@ -77,8 +91,8 @@ export function computeRunningCharges(dailyRate, admittedAt) {
 }
 
 // Format bed status for display.
-export function getBedStatus(bedId, occupiedSet) {
-  if (occupiedSet.has(bedId)) return 'occupied'
+export function getBedStatus(floorId, wardId, roomId, bedId, occupiedMap) {
+  if (occupiedMap.has(bedKey(floorId, wardId, roomId, bedId))) return 'occupied'
   return 'vacant'
 }
 

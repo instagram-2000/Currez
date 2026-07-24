@@ -1,9 +1,12 @@
 import BedBlock from './BedBlock'
+import { bedKey } from '../../utils/bedManagement'
 
-function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedSelect, selectedBedId }) {
-  const occupiedMap = {}
+function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedSelect, selectedBedId, statusFilter }) {
+  const occupiedMap = new Map()
   for (const admission of activeAdmissions) {
-    occupiedMap[admission.bedId] = admission
+    if (admission.status === 'active' && admission.floorId && admission.wardId && admission.roomId && admission.bedId) {
+      occupiedMap.set(bedKey(admission.floorId, admission.wardId, admission.roomId, admission.bedId), admission)
+    }
   }
 
   const filteredFloors = (floors || []).filter(
@@ -55,24 +58,31 @@ function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedS
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {(room.beds || []).map((bed) => (
-                            <BedBlock
-                              key={bed.bedId}
-                              bed={{
-                                ...bed,
-                                floorId: floor.id,
-                                floorName: floor.name,
-                                wardId: ward.id,
-                                wardName: ward.name,
-                                roomId: room.id,
-                                roomName: room.name,
-                              }}
-                              admission={occupiedMap[bed.bedId] || null}
-                              isOccupied={!!occupiedMap[bed.bedId]}
-                              isSelected={selectedBedId === bed.bedId}
-                              onSelect={onBedSelect}
-                            />
-                          ))}
+                          {(room.beds || []).map((bed) => {
+                            const key = bedKey(floor.id, ward.id, room.id, bed.bedId)
+                            const admission = occupiedMap.get(key) || null
+                            const isOccupied = !!admission
+                            if (statusFilter === 'vacant' && isOccupied) return null
+                            if (statusFilter === 'occupied' && !isOccupied) return null
+                            return (
+                              <BedBlock
+                                key={bed.bedId}
+                                bed={{
+                                  ...bed,
+                                  floorId: floor.id,
+                                  floorName: floor.name,
+                                  wardId: ward.id,
+                                  wardName: ward.name,
+                                  roomId: room.id,
+                                  roomName: room.name,
+                                }}
+                                admission={admission}
+                                isOccupied={isOccupied}
+                                isSelected={selectedBedId === bed.bedId}
+                                onSelect={onBedSelect}
+                              />
+                            )
+                          })}
                         </div>
                       </div>
                     ))}
