@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import Modal from '../common/Modal'
 import { computeDaysSince, computeRunningCharges } from '../../utils/bedManagement'
+import { useFeature } from '../../hooks/useFeature'
 
 function DischargeModal({ admission, onDischarge, onClose }) {
   const [dischargeSummary, setDischargeSummary] = useState('')
+  const [createInvoice, setCreateInvoice] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { enabled: billingEnabled } = useFeature('billing')
 
   const days = computeDaysSince(admission.admittedAt)
   const totalCharges = computeRunningCharges(admission.dailyRate, admission.admittedAt)
@@ -19,6 +22,7 @@ function DischargeModal({ admission, onDischarge, onClose }) {
         dischargeSummary: dischargeSummary.trim(),
         totalDays: days,
         totalCharges,
+        createInvoice: billingEnabled && createInvoice,
       })
       onClose()
     } catch (err) {
@@ -84,6 +88,23 @@ function DischargeModal({ admission, onDischarge, onClose }) {
             className="w-full resize-none rounded-xl border border-line bg-card px-3.5 py-2.5 text-sm text-heading placeholder-faint outline-none transition-colors focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10"
           />
         </div>
+
+        {billingEnabled && totalCharges > 0 && (
+          <label className="flex items-center gap-3 rounded-xl border border-line/80 bg-surface p-3 transition-colors hover:bg-surface-strong cursor-pointer">
+            <input
+              type="checkbox"
+              checked={createInvoice}
+              onChange={(e) => setCreateInvoice(e.target.checked)}
+              className="h-4 w-4 rounded border-line text-indigo-600 focus:ring-indigo-500/20"
+            />
+            <div>
+              <div className="text-sm font-medium text-heading">Add to billing invoice</div>
+              <div className="text-xs text-muted">
+                Auto-create an invoice with ₹{totalCharges.toLocaleString('en-IN')} bed charges
+              </div>
+            </div>
+          </label>
+        )}
 
         {error && <p className="text-xs font-medium text-red-600 dark:text-red-400">{error}</p>}
 

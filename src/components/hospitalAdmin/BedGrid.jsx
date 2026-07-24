@@ -58,7 +58,15 @@ function BedGrid({ floors, activeAdmissions, selectedFloorId, wardFilter, onBedS
                           {(room.beds || []).map((bed) => (
                             <BedBlock
                               key={bed.bedId}
-                              bed={bed}
+                              bed={{
+                                ...bed,
+                                floorId: floor.id,
+                                floorName: floor.name,
+                                wardId: ward.id,
+                                wardName: ward.name,
+                                roomId: room.id,
+                                roomName: room.name,
+                              }}
                               admission={occupiedMap[bed.bedId] || null}
                               isOccupied={!!occupiedMap[bed.bedId]}
                               isSelected={selectedBedId === bed.bedId}

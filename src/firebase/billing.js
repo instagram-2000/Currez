@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   runTransaction,
@@ -290,4 +291,79 @@ export function voidInvoice(invoiceId, { voidedBy, reason }) {
     voidReason: reason || '',
     updatedAt: serverTimestamp(),
   })
+}
+
+// Best-effort convenience run on discharge when the user opts in — adds bed
+// charges to billing. If the admission has a linked appointment that already
+// has a 'due' invoice, appends bed charges as a new line item. Otherwise
+// creates a fresh standalone invoice keyed on the admission id. Never throws
+// and must never block the discharge action that triggered it.
+export async function autoCreateDischargeInvoice({
+  billingEnabled,
+  hospitalId,
+  admissionId,
+  patientId,
+  patientName,
+  patientPhone,
+  doctorId,
+  doctorName,
+  bedType,
+  wardName,
+  roomName,
+  dailyRate,
+  totalDays,
+  totalCharges,
+  linkedAppointmentId,
+  createdBy,
+}) {
+  if (!billingEnabled) return
+  const amount = Number(totalCharges)
+  if (!(amount > 0)) return
+
+  const label = `Bed Charges — ${bedType || 'General'}${wardName ? ' (' + wardName + ')' : ''}${roomName ? ', ' + roomName : ''} × ${totalDays} days @ ₹${Number(dailyRate) || 0}/day`
+
+  try {
+    // If the admission is linked to an appointment that already has a due
+    // invoice, append bed charges to it instead of creating a duplicate.
+    if (linkedAppointmentId) {
+      const existingSnap = await getDoc(doc(db, INVOICES_COLLECTION, linkedAppointmentId))
+      if (existingSnap.exists()) {
+        const existing = existingSnap.data()
+        if (existing.status === INVOICE_STATUS.DUE) {
+          await addInvoiceCharge(linkedAppointmentId, {
+            currentLineItems: existing.lineItems,
+            currentDiscount: existing.discount,
+            label,
+            amount,
+          })
+          return linkedAppointmentId
+        }
+      }
+    }
+
+    // No existing due invoice — create a standalone one keyed on admission id.
+    const today = new Date()
+    const date = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    const time = today.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+
+    await createInvoice(
+      {
+        hospitalId,
+        appointmentId: admissionId,
+        patientId,
+        patientName,
+        patientPhone,
+        doctorId: doctorId || null,
+        doctorName: doctorName || '',
+        date,
+        time,
+        lineItems: [{ label, amount }],
+        discount: 0,
+      },
+      createdBy
+    )
+    return admissionId
+  } catch {
+    // Best-effort — see doc comment above.
+  }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useHospitalData } from '../../contexts/HospitalDataContext'
+import { useFeature } from '../../hooks/useFeature'
 import { ROLES } from '../../utils/roles'
 import {
   subscribeBedConfig,
@@ -10,6 +11,7 @@ import {
   createBedConfig,
   updateBedConfig,
 } from '../../firebase/bedManagement'
+import { autoCreateDischargeInvoice } from '../../firebase/billing'
 import { flattenBeds, computeOccupancyStats, getAdmissionForBed } from '../../utils/bedManagement'
 import BedGrid from '../../components/hospitalAdmin/BedGrid'
 import BedStatsPanel from '../../components/hospitalAdmin/BedStatsPanel'
@@ -21,6 +23,7 @@ import { PageSpinner } from '../../components/common/Spinner'
 function BedManagementPage({ tenantSlug }) {
   const { user, role } = useAuth()
   const { staff, patients } = useHospitalData()
+  const { enabled: billingEnabled } = useFeature('billing')
   const isAdmin = role === ROLES.HOSPITAL_ADMIN
 
   const [config, setConfig] = useState(undefined)
@@ -77,10 +80,32 @@ function BedManagementPage({ tenantSlug }) {
   }
 
   async function handleDischarge(admissionId, data) {
+    const { createInvoice, ...dischargeData } = data
     await dischargePatient(admissionId, {
-      ...data,
+      ...dischargeData,
       dischargedBy: user.email,
     })
+
+    if (createInvoice && billingEnabled && dischargeModal) {
+      await autoCreateDischargeInvoice({
+        billingEnabled: true,
+        hospitalId: tenantSlug,
+        admissionId,
+        patientId: dischargeModal.patientId,
+        patientName: dischargeModal.patientName,
+        patientPhone: dischargeModal.patientPhone,
+        doctorId: dischargeModal.attendingDoctorId,
+        doctorName: dischargeModal.attendingDoctor,
+        bedType: dischargeModal.bedType,
+        wardName: dischargeModal.wardName,
+        roomName: dischargeModal.roomName,
+        dailyRate: dischargeModal.dailyRate,
+        totalDays: dischargeData.totalDays,
+        totalCharges: dischargeData.totalCharges,
+        linkedAppointmentId: dischargeModal.linkedAppointmentId,
+        createdBy: user.email,
+      })
+    }
   }
 
   async function handleSaveConfig(newConfig) {
