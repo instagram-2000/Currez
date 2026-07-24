@@ -131,11 +131,6 @@ function BedStatsPanel({
                       {admission.patientName}
                     </div>
                   )}
-                  {!isOccupied && (
-                    <div className="mt-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                      Click to admit
-                    </div>
-                  )}
                 </button>
               )
             })}
