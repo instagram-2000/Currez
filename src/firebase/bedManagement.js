@@ -1,4 +1,5 @@
 import {
+  arrayUnion,
   collection,
   doc,
   addDoc,
@@ -155,6 +156,67 @@ export async function admitPatient(
   })
 
   return ref.id
+}
+
+// Moves an active admission to a different bed WITHOUT discharging it — same
+// admission doc, same admittedAt, same eventual invoice. This is the fix for
+// "moving a patient to another room creates a second invoice": that used to
+// require discharge + a brand-new admitPatient() call, which fragmented one
+// continuous stay into two separate admission docs (and, since the invoice
+// doc id is literally the admission id — see createInvoice in billing.js —
+// two separate invoices). A lateral move now just rewrites the location
+// fields in place, so there's only ever one admission, and therefore only
+// one invoice, for the whole stay.
+export async function transferAdmission(admission, destination, transferredBy) {
+  const { id: admissionId, hospitalId } = admission || {}
+  if (!admissionId || !destination?.bedId) {
+    throw new Error('Admission and destination bed are required.')
+  }
+
+  const existingQuery = query(
+    collection(db, ADMISSIONS_COLLECTION),
+    where('hospitalId', '==', hospitalId),
+    where('bedId', '==', destination.bedId),
+    where('status', '==', 'active')
+  )
+  const existingSnap = await getDocs(existingQuery)
+  const conflicting = existingSnap.docs.find((d) => {
+    if (d.id === admissionId) return false
+    const data = d.data()
+    return (
+      data.floorId === destination.floorId &&
+      (data.wardId || null) === (destination.wardId || null) &&
+      (data.roomId || null) === (destination.roomId || null)
+    )
+  })
+  if (conflicting) {
+    throw new Error('The destination bed is already occupied.')
+  }
+
+  await updateDoc(doc(db, ADMISSIONS_COLLECTION, admissionId), {
+    floorId: destination.floorId,
+    floorName: destination.floorName,
+    wardId: destination.wardId || null,
+    wardName: destination.wardName || null,
+    roomId: destination.roomId || null,
+    roomName: destination.roomName || null,
+    bedId: destination.bedId,
+    bedType: destination.bedType,
+    dailyRate: Number(destination.dailyRate) || 0,
+    transferHistory: arrayUnion({
+      fromBedId: admission.bedId,
+      fromFloorName: admission.floorName || null,
+      fromWardName: admission.wardName || null,
+      fromRoomName: admission.roomName || null,
+      toBedId: destination.bedId,
+      toFloorName: destination.floorName,
+      toWardName: destination.wardName || null,
+      toRoomName: destination.roomName || null,
+      transferredAt: new Date(),
+      transferredBy,
+    }),
+    updatedAt: serverTimestamp(),
+  })
 }
 
 export async function dischargePatient(admissionId, { dischargeSummary, dischargedBy, totalDays, totalCharges }) {

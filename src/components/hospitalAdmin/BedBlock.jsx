@@ -13,7 +13,7 @@ const STYLES = {
     'bg-indigo-500/10 border-indigo-500/50 text-indigo-500 ring-2 ring-indigo-500/30 cursor-pointer',
 }
 
-function BedBlock({ bed, admission, isSelected, onSelect, canManage, onToggleMaintenance }) {
+function BedBlock({ bed, admission, isSelected, onSelect, canManage, onToggleMaintenance, onTransferRequest }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const rawStatus = getBedDisplayStatus(bed, admission)
   const status = isSelected ? 'selected' : rawStatus
@@ -22,7 +22,7 @@ function BedBlock({ bed, admission, isSelected, onSelect, canManage, onToggleMai
   const charges = admission ? computeRunningCharges(admission.dailyRate, admission.admittedAt) : 0
 
   const clickable = rawStatus !== 'maintenance' || !!admission
-  const showQuickAction = canManage && !admission && (rawStatus === 'vacant' || rawStatus === 'maintenance')
+  const showQuickAction = canManage
 
   return (
     <div className="group relative">
@@ -78,18 +78,32 @@ function BedBlock({ bed, admission, isSelected, onSelect, canManage, onToggleMai
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute top-6 right-0 z-20 w-40 overflow-hidden rounded-xl border border-line bg-surface shadow-lg animate-fade-in-up">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    onToggleMaintenance?.(bed, rawStatus === 'maintenance' ? 'active' : 'maintenance')
-                  }}
-                  className="block w-full px-3 py-2.5 text-left text-xs font-medium text-body hover:bg-card-strong hover:text-heading"
-                >
-                  {rawStatus === 'maintenance' ? 'Mark as available' : 'Mark under maintenance'}
-                </button>
+              <div className="absolute top-6 right-0 z-20 w-44 overflow-hidden rounded-xl border border-line bg-surface shadow-lg animate-fade-in-up">
+                {admission ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpen(false)
+                      onTransferRequest?.(bed, admission)
+                    }}
+                    className="block w-full px-3 py-2.5 text-left text-xs font-medium text-body hover:bg-card-strong hover:text-heading"
+                  >
+                    Move to another bed
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpen(false)
+                      onToggleMaintenance?.(bed, rawStatus === 'maintenance' ? 'active' : 'maintenance')
+                    }}
+                    className="block w-full px-3 py-2.5 text-left text-xs font-medium text-body hover:bg-card-strong hover:text-heading"
+                  >
+                    {rawStatus === 'maintenance' ? 'Mark as available' : 'Mark under maintenance'}
+                  </button>
+                )}
               </div>
             </>
           )}

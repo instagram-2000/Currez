@@ -51,6 +51,11 @@ function DischargeModal({ admission, onDischarge, onClose }) {
               Bed {admission.bedId}
               {formatBedLocation(admission) && <> — {formatBedLocation(admission)}</>}
             </div>
+            {admission.transferHistory?.length > 0 && (
+              <div className="mt-0.5 text-[11px] text-indigo-600 dark:text-indigo-300">
+                Moved {admission.transferHistory.length} time{admission.transferHistory.length !== 1 ? 's' : ''} during this stay — billed as one continuous admission
+              </div>
+            )}
           </div>
         </div>
 

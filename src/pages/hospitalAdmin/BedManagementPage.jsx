@@ -8,6 +8,7 @@ import {
   subscribeActiveAdmissions,
   admitPatient,
   dischargePatient,
+  transferAdmission,
   createBedConfig,
   updateBedConfig,
 } from '../../firebase/bedManagement'
@@ -18,6 +19,7 @@ import BedStatsPanel from '../../components/hospitalAdmin/BedStatsPanel'
 import FloorTabs from '../../components/hospitalAdmin/FloorTabs'
 import AdmitPatientModal from '../../components/hospitalAdmin/AdmitPatientModal'
 import DischargeModal from '../../components/hospitalAdmin/DischargeModal'
+import TransferBedModal from '../../components/hospitalAdmin/TransferBedModal'
 import BedConfigBuilder from '../../components/hospitalAdmin/BedConfigBuilder'
 import { PageSpinner } from '../../components/common/Spinner'
 
@@ -34,6 +36,7 @@ function BedManagementPage({ tenantSlug }) {
   const [view, setView] = useState('grid') // 'grid' | 'configure'
   const [admitModal, setAdmitModal] = useState(null)
   const [dischargeModal, setDischargeModal] = useState(null)
+  const [transferModal, setTransferModal] = useState(null)
 
   useEffect(() => {
     const unsub = subscribeBedConfig(tenantSlug, setConfig)
@@ -128,6 +131,14 @@ function BedManagementPage({ tenantSlug }) {
     await updateBedConfig(tenantSlug, nextConfig, user.email)
   }
 
+  function handleTransferRequest(bed, admission) {
+    setTransferModal(admission)
+  }
+
+  async function handleTransfer(destination) {
+    await transferAdmission(transferModal, destination, user.email)
+  }
+
   if (config === undefined || activeAdmissions === null) {
     return <PageSpinner />
   }
@@ -205,6 +216,7 @@ function BedManagementPage({ tenantSlug }) {
             onBedSelect={handleBedSelect}
             canManage
             onToggleMaintenance={handleToggleMaintenance}
+            onTransferRequest={handleTransferRequest}
           />
         </div>
       </div>
@@ -226,6 +238,17 @@ function BedManagementPage({ tenantSlug }) {
           admission={dischargeModal}
           onDischarge={handleDischarge}
           onClose={() => setDischargeModal(null)}
+        />
+      )}
+
+      {transferModal && (
+        <TransferBedModal
+          admission={transferModal}
+          allBeds={allBeds}
+          activeAdmissions={activeAdmissions || []}
+          config={config}
+          onTransfer={handleTransfer}
+          onClose={() => setTransferModal(null)}
         />
       )}
     </div>
