@@ -11,6 +11,7 @@ function BedStatsPanel({
   onStatusFilterChange,
   allBeds,
   activeAdmissions,
+  onBedSelect,
 }) {
   const [expandedStatus, setExpandedStatus] = useState(null)
 
@@ -27,28 +28,23 @@ function BedStatsPanel({
     }
   }
 
+  function findAdmission(bed) {
+    return (
+      activeAdmissions.find(
+        (a) =>
+          a.status === 'active' &&
+          a.floorId === bed.floorId &&
+          a.wardId === bed.wardId &&
+          a.roomId === bed.roomId &&
+          a.bedId === bed.bedId
+      ) || null
+    )
+  }
+
   const filteredBeds = expandedStatus
     ? allBeds.filter((b) => {
-        if (expandedStatus === 'occupied') {
-          return activeAdmissions.some(
-            (a) =>
-              a.status === 'active' &&
-              a.floorId === b.floorId &&
-              a.wardId === b.wardId &&
-              a.roomId === b.roomId &&
-              a.bedId === b.bedId
-          )
-        }
-        if (expandedStatus === 'vacant') {
-          return !activeAdmissions.some(
-            (a) =>
-              a.status === 'active' &&
-              a.floorId === b.floorId &&
-              a.wardId === b.wardId &&
-              a.roomId === b.roomId &&
-              a.bedId === b.bedId
-          )
-        }
+        if (expandedStatus === 'occupied') return !!findAdmission(b)
+        if (expandedStatus === 'vacant') return !findAdmission(b)
         return true
       })
     : []
@@ -87,7 +83,9 @@ function BedStatsPanel({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-faint">
-              {expandedStatus === 'occupied' ? 'Occupied Beds' : 'Vacant Beds'}
+              {expandedStatus === 'total' && 'All Beds'}
+              {expandedStatus === 'occupied' && 'Occupied Beds'}
+              {expandedStatus === 'vacant' && 'Vacant Beds'}
             </h3>
             <button
               type="button"
@@ -100,42 +98,45 @@ function BedStatsPanel({
               Clear
             </button>
           </div>
-          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+          <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
             {filteredBeds.map((bed) => {
-              const admission = activeAdmissions.find(
-                (a) =>
-                  a.status === 'active' &&
-                  a.floorId === bed.floorId &&
-                  a.wardId === bed.wardId &&
-                  a.roomId === bed.roomId &&
-                  a.bedId === bed.bedId
-              )
+              const admission = findAdmission(bed)
+              const isOccupied = !!admission
               return (
-                <div
+                <button
                   key={`${bed.floorId}/${bed.wardId}/${bed.roomId}/${bed.bedId}`}
-                  className="rounded-lg border border-line/60 bg-card px-3 py-2"
+                  type="button"
+                  onClick={() => onBedSelect?.(bed, admission)}
+                  className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                    isOccupied
+                      ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'
+                      : 'border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-heading">{bed.bedId}</span>
                     <span
                       className={`text-[9px] font-semibold uppercase ${
-                        expandedStatus === 'occupied'
-                          ? 'text-red-500'
-                          : 'text-emerald-500'
+                        isOccupied ? 'text-red-500' : 'text-emerald-500'
                       }`}
                     >
-                      {expandedStatus === 'occupied' ? 'Occupied' : 'Vacant'}
+                      {isOccupied ? 'Occupied' : 'Vacant'}
                     </span>
                   </div>
                   <div className="mt-0.5 text-[10px] text-muted">
                     {bed.floorName} &middot; {bed.wardName} &middot; {bed.roomName}
                   </div>
-                  {admission && (
+                  {isOccupied && admission.patientName && (
                     <div className="mt-1 text-[10px] font-medium text-heading">
                       {admission.patientName}
                     </div>
                   )}
-                </div>
+                  {!isOccupied && (
+                    <div className="mt-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                      Click to admit
+                    </div>
+                  )}
+                </button>
               )
             })}
           </div>

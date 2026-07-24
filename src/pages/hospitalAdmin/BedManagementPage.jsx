@@ -154,6 +154,7 @@ function BedManagementPage({ tenantSlug }) {
             onStatusFilterChange={setStatusFilter}
             allBeds={allBeds}
             activeAdmissions={activeAdmissions || []}
+            onBedSelect={handleBedSelect}
           />
         </aside>
 
